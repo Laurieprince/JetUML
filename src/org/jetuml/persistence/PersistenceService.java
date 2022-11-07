@@ -70,7 +70,7 @@ public final class PersistenceService
 	 * @throws DeserializationException if there is a problem decoding the file.
 	 * @pre pFile != null
 	 */
-	public static VersionedDiagram read(File pFile) throws IOException, DeserializationException
+	public static LoadedDiagramFile read(File pFile) throws IOException, DeserializationException
 	{
 		assert pFile != null;
 		try( BufferedReader in = new BufferedReader(
@@ -78,7 +78,7 @@ public final class PersistenceService
 		{
 			// Extra wrapper to support backward compatibility. Eventually take down the migrator.
 			// Replace VersionMigrator.migrate with JSonDecoder.decode
-			return new VersionMigrator().migrate(new JSONObject(in.readLine())); 
+			return JsonDecoder.decode(new JSONObject(in.readLine()));
 		}
 		catch( JSONException e )
 		{

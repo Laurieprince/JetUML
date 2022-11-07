@@ -51,7 +51,7 @@ import org.jetuml.diagram.DiagramType;
 import org.jetuml.gui.tips.TipDialog;
 import org.jetuml.persistence.DeserializationException;
 import org.jetuml.persistence.PersistenceService;
-import org.jetuml.persistence.VersionedDiagram;
+import org.jetuml.persistence.LoadedDiagramFile;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Alert;
@@ -294,17 +294,16 @@ public class EditorFrame extends BorderPane
 		
 		try 
 		{
-			VersionedDiagram versionedDiagram = PersistenceService.read(pFile); 
-			DiagramTab frame = new DiagramTab(versionedDiagram.diagram());
-			frame.setFile(pFile.getAbsoluteFile());
-			addRecentFile(pFile.getPath());
-			insertGraphFrameIntoTabbedPane(frame);
-			if( versionedDiagram.wasMigrated())
-			{
-				String message = String.format(RESOURCES.getString("warning.version.message"), 
-						versionedDiagram.version().toString());
-				Alert alert = new Alert(AlertType.WARNING, message, ButtonType.OK);
-				alert.setTitle(RESOURCES.getString("warning.version.title"));
+			LoadedDiagramFile loadedDiagramFile = PersistenceService.read(pFile); 
+			
+			if(!loadedDiagramFile.hasError()) {
+				DiagramTab frame = new DiagramTab(loadedDiagramFile.diagram());
+				frame.setFile(pFile.getAbsoluteFile());
+				addRecentFile(pFile.getPath());
+				insertGraphFrameIntoTabbedPane(frame);
+			} else {
+				Alert alert = new Alert(AlertType.ERROR,loadedDiagramFile.getErrors().toString(), ButtonType.OK);
+				alert.setTitle("JSON parsing error");
 				alert.initOwner(aMainStage);
 				alert.showAndWait();
 			}

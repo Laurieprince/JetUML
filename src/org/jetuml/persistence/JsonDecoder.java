@@ -45,21 +45,23 @@ public final class JsonDecoder
 	 * @return The decoded diagram.
 	 * @throws DeserializationException If it's not possible to decode the object into a valid diagram.
 	 */
-	public static Diagram decode(JSONObject pDiagram)
+	public static LoadedDiagramFile decode(JSONObject pDiagram)
 	{
 		assert pDiagram != null;
 		try
 		{
+			LoadedDiagramFile loadedDiagramFile = new LoadedDiagramFile();
 			Diagram diagram = new Diagram(DiagramType.fromName(pDiagram.getString("diagram")));
-			DeserializationContext context = new DeserializationContext(diagram);
-			decodeNodes(context, pDiagram);
-			restoreChildren(context, pDiagram);
-			restoreRootNodes(context);
-			decodeEdges(context, pDiagram);
-			context.attachNodes();
-			return diagram;
-		}
-		catch( JSONException | IllegalArgumentException exception )
+			loadedDiagramFile.setDiagram(diagram);
+			decodeNodes(loadedDiagramFile, pDiagram);
+			restoreChildren(loadedDiagramFile, pDiagram);
+			restoreRootNodes(loadedDiagramFile);
+			decodeEdges(loadedDiagramFile, pDiagram);
+			loadedDiagramFile.context().attachNodes();
+
+			return loadedDiagramFile;
+		} 
+		catch (JSONException | IllegalArgumentException exception)
 		{
 			throw new DeserializationException("Cannot decode serialized object", exception);
 		}
@@ -70,24 +72,54 @@ public final class JsonDecoder
 	 * to represent them.
 	 * throws Deserialization Exception
 	 */
-	private static void decodeNodes(DeserializationContext pContext, JSONObject pObject)
+	private static void decodeNodes(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
 	{
 		JSONArray nodes = pObject.getJSONArray("nodes");
+		var diagramPrototypeClasses = pLoadedDiagramFile.diagram().getType().getPrototypes().stream().map(x -> x.getClass()).toList();
 		for( int i = 0; i < nodes.length(); i++ )
 		{
 			try
 			{
 				JSONObject object = nodes.getJSONObject(i);
-				Class<?> nodeClass = Class.forName(PREFIX_NODES + object.getString("type"));
+
+				if (!object.has("type") || !object.has("id"))
+				{
+					pLoadedDiagramFile.addError("'type' property is not defined for node " + i);
+					continue;
+				}
+				
+				Class<?> nodeClass = Class.forName(PREFIX_NODES + object.getString("type")); 
+				
+				if(!diagramPrototypeClasses.contains(nodeClass))
+				{
+					pLoadedDiagramFile.addError("node " + nodeClass + " is not defined for " + pLoadedDiagramFile.diagram().getType());
+					continue;
+				}
+				
 				Node node = (Node) nodeClass.getDeclaredConstructor().newInstance();
+				
+				if (!object.has("x") || !object.has("y"))
+				{ 
+					pLoadedDiagramFile.addError("coordinates are not defined for node " + i);
+					continue;
+				}
+
 				node.moveTo(new Point(object.getInt("x"), object.getInt("y")));
 				for( Property property : node.properties() )
 				{
+					if (!object.has(property.name().external()))
+					{
+						pLoadedDiagramFile.addError(property.name().external() + " is not defined for node " + i);
+						continue;
+					}
+
 					property.set(object.get(property.name().external()));
 				}
-				pContext.addNode(node, object.getInt("id"));
-			}
-			catch( ReflectiveOperationException exception )
+				
+				pLoadedDiagramFile.context().addNode(node, object.getInt("id"));
+				
+			} 
+			catch (ReflectiveOperationException exception)
 			{
 				throw new DeserializationException("Cannot instantiate serialized object", exception);
 			}
@@ -97,13 +129,13 @@ public final class JsonDecoder
 	/* 
 	 * Discovers the root nodes and stores them in the diagram.
 	 */
-	private static void restoreRootNodes(DeserializationContext pContext)
+	private static void restoreRootNodes(LoadedDiagramFile pLoadedDiagramFile)
 	{
-		for( Node node : pContext )
+		for( Node node : pLoadedDiagramFile.context() )
 		{
 			if( !node.hasParent() )
 			{
-				pContext.pDiagram().addRootNode(node);
+				pLoadedDiagramFile.context().pDiagram().addRootNode(node);
 			}
 		}
 	}
@@ -112,7 +144,7 @@ public final class JsonDecoder
 	 * Restores the parent-child hierarchy within the context's diagram. Assumes
 	 * the context has been initialized with all the nodes.
 	 */
-	private static void restoreChildren(DeserializationContext pContext, JSONObject pObject)
+	private static void restoreChildren(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
 	{
 		JSONArray nodes = pObject.getJSONArray("nodes");
 		for( int i = 0; i < nodes.length(); i++ )
@@ -120,11 +152,11 @@ public final class JsonDecoder
 			JSONObject object = nodes.getJSONObject(i);
 			if( object.has("children"))
 			{
-				Node node = pContext.getNode( object.getInt("id"));
+				Node node = pLoadedDiagramFile.context().getNode(object.getInt("id"));
 				JSONArray children = object.getJSONArray("children");
 				for( int j = 0; j < children.length(); j++ )
 				{
-					node.addChild(pContext.getNode(children.getInt(j)));
+					node.addChild(pLoadedDiagramFile.context().getNode(children.getInt(j)));
 				}
 			}
 		}
@@ -135,25 +167,52 @@ public final class JsonDecoder
 	 * to represent them.
 	 * throws Deserialization Exception
 	 */
-	private static void decodeEdges(DeserializationContext pContext, JSONObject pObject)
+	private static void decodeEdges(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
 	{
 		JSONArray edges = pObject.getJSONArray("edges");
-		for( int i = 0; i < edges.length(); i++ )
+		var diagramPrototypeClasses = pLoadedDiagramFile.diagram().getType().getPrototypes().stream().map(x -> x.getClass()).toList();
+		for (int i = 0; i < edges.length(); i++)
 		{
 			try
 			{
 				JSONObject object = edges.getJSONObject(i);
+
+				if (!object.has("type") || !object.has("start") || !object.has("end"))
+				{
+					pLoadedDiagramFile.addError("type, start and end properties are not defined for this edge");
+					continue;
+				}
+
 				Class<?> edgeClass = Class.forName(PREFIX_EDGES + object.getString("type"));
+
+				if(!diagramPrototypeClasses.contains(edgeClass))
+				{
+					pLoadedDiagramFile.addError("edge " + edgeClass + " is not defined for " + pLoadedDiagramFile.diagram().getType());
+					continue;
+				}
+				
 				Edge edge = (Edge) edgeClass.getDeclaredConstructor().newInstance();
 				
 				for( Property property : edge.properties())
 				{
+					if (!object.has(property.name().external()))
+					{
+						pLoadedDiagramFile.addError(property.name().external() + " properties are not defined for this edge");
+						continue;
+					}
+
 					property.set(object.get(property.name().external()));
 				}
-				edge.connect(pContext.getNode(object.getInt("start")), pContext.getNode(object.getInt("end")), pContext.pDiagram());
-				pContext.pDiagram().addEdge(edge);
-			}
-			catch( ReflectiveOperationException exception )
+				
+//				if(diagramBuilder.canAdd(edge, startNode, endNode))
+				
+				edge.connect(pLoadedDiagramFile.context().getNode(object.getInt("start")),
+						pLoadedDiagramFile.context().getNode(object.getInt("end")),
+						pLoadedDiagramFile.context().pDiagram());
+				
+				pLoadedDiagramFile.context().pDiagram().addEdge(edge);
+			} 
+			catch (ReflectiveOperationException exception)
 			{
 				throw new DeserializationException("Cannot instantiate serialized object", exception);
 			}
