@@ -25,6 +25,7 @@ import org.jetuml.diagram.DiagramType;
 import org.jetuml.diagram.Edge;
 import org.jetuml.diagram.Node;
 import org.jetuml.diagram.Property;
+import org.jetuml.diagram.builder.DiagramBuilder;
 import org.jetuml.geom.Point;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -56,7 +57,8 @@ public final class JsonDecoder
 			decodeNodes(loadedDiagramFile, pDiagram);
 			restoreChildren(loadedDiagramFile, pDiagram);
 			restoreRootNodes(loadedDiagramFile);
-			decodeEdges(loadedDiagramFile, pDiagram);
+			DiagramBuilder builder = DiagramType.newBuilderInstanceFor(diagram);
+			decodeEdges(loadedDiagramFile, pDiagram, builder);
 			loadedDiagramFile.context().attachNodes();
 
 			return loadedDiagramFile;
@@ -142,7 +144,7 @@ public final class JsonDecoder
 	 * to represent them.
 	 * throws Deserialization Exception
 	 */
-	private static void decodeEdges(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
+	private static void decodeEdges(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject, DiagramBuilder builder)
 	{
 		JSONArray edges = pObject.getJSONArray("edges");
 		for (int i = 0; i < edges.length(); i++)
@@ -160,7 +162,20 @@ public final class JsonDecoder
 					property.set(object.get(property.name().external()));
 				}
 				
+				// Validate the edge can be connected to startNode and endNode
+				var startNode = pLoadedDiagramFile.context().getNode(object.getInt("start"));
+				var endNode = pLoadedDiagramFile.context().getNode(object.getInt("end"));
 				
+				if(builder.canAdd(edge, startNode.position(), endNode.position()))
+				{
+					edge.connect(startNode, endNode, pLoadedDiagramFile.context().pDiagram());
+					
+					pLoadedDiagramFile.context().pDiagram().addEdge(edge);
+				}
+				else
+				{
+					pLoadedDiagramFile.addError(String.format("Can't connect %s from %s to %s.", edge.toString(), startNode.toString(), endNode.toString()));
+				}
 			} 
 			catch (ReflectiveOperationException exception)
 			{
