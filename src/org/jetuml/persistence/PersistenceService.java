@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
 import org.jetuml.diagram.Diagram;
 import org.json.JSONException;
@@ -57,7 +58,7 @@ public final class PersistenceService
 		try( PrintWriter out = new PrintWriter(
 				new OutputStreamWriter(new FileOutputStream(pFile), StandardCharsets.UTF_8)))
 		{
-			out.println(JsonEncoder.encode(pDiagram).toString());
+			out.println(JsonEncoder.encode(pDiagram).toString(3));
 		}
 	}
 	
@@ -76,9 +77,8 @@ public final class PersistenceService
 		try( BufferedReader in = new BufferedReader(
 				new InputStreamReader(new FileInputStream(pFile), StandardCharsets.UTF_8)))
 		{
-			// Extra wrapper to support backward compatibility. Eventually take down the migrator.
-			// Replace VersionMigrator.migrate with JSonDecoder.decode
-			return JsonDecoder.decode(new JSONObject(in.readLine()));
+			JSONObject jsonObject = new JSONObject(in.lines().collect(Collectors.joining("\n")));
+			return JsonDecoder.decode(jsonObject);
 		}
 		catch( JSONException e )
 		{
