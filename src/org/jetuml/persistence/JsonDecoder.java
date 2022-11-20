@@ -75,49 +75,24 @@ public final class JsonDecoder
 	private static void decodeNodes(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
 	{
 		JSONArray nodes = pObject.getJSONArray("nodes");
-		var diagramPrototypeClasses = pLoadedDiagramFile.diagram().getType().getPrototypes().stream().map(x -> x.getClass()).toList();
+		
 		for( int i = 0; i < nodes.length(); i++ )
 		{
 			try
 			{
 				JSONObject object = nodes.getJSONObject(i);
-
-				if (!object.has("type") || !object.has("id"))
-				{
-					pLoadedDiagramFile.addError("'type' property is not defined for node " + i);
-					continue;
-				}
 				
 				Class<?> nodeClass = Class.forName(PREFIX_NODES + object.getString("type")); 
 				
-				if(!diagramPrototypeClasses.contains(nodeClass))
-				{
-					pLoadedDiagramFile.addError("node " + nodeClass + " is not defined for " + pLoadedDiagramFile.diagram().getType());
-					continue;
-				}
-				
 				Node node = (Node) nodeClass.getDeclaredConstructor().newInstance();
-				
-				if (!object.has("x") || !object.has("y"))
-				{ 
-					pLoadedDiagramFile.addError("coordinates are not defined for node " + i);
-					continue;
-				}
 
 				node.moveTo(new Point(object.getInt("x"), object.getInt("y")));
 				for( Property property : node.properties() )
 				{
-					if (!object.has(property.name().external()))
-					{
-						pLoadedDiagramFile.addError(property.name().external() + " is not defined for node " + i);
-						continue;
-					}
-
 					property.set(object.get(property.name().external()));
 				}
 				
 				pLoadedDiagramFile.context().addNode(node, object.getInt("id"));
-				
 			} 
 			catch (ReflectiveOperationException exception)
 			{
@@ -170,47 +145,22 @@ public final class JsonDecoder
 	private static void decodeEdges(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
 	{
 		JSONArray edges = pObject.getJSONArray("edges");
-		var diagramPrototypeClasses = pLoadedDiagramFile.diagram().getType().getPrototypes().stream().map(x -> x.getClass()).toList();
 		for (int i = 0; i < edges.length(); i++)
 		{
 			try
 			{
 				JSONObject object = edges.getJSONObject(i);
 
-				if (!object.has("type") || !object.has("start") || !object.has("end"))
-				{
-					pLoadedDiagramFile.addError("type, start and end properties are not defined for this edge");
-					continue;
-				}
-
 				Class<?> edgeClass = Class.forName(PREFIX_EDGES + object.getString("type"));
 
-				if(!diagramPrototypeClasses.contains(edgeClass))
-				{
-					pLoadedDiagramFile.addError("edge " + edgeClass + " is not defined for " + pLoadedDiagramFile.diagram().getType());
-					continue;
-				}
-				
 				Edge edge = (Edge) edgeClass.getDeclaredConstructor().newInstance();
 				
 				for( Property property : edge.properties())
 				{
-					if (!object.has(property.name().external()))
-					{
-						pLoadedDiagramFile.addError(property.name().external() + " properties are not defined for this edge");
-						continue;
-					}
-
 					property.set(object.get(property.name().external()));
 				}
 				
-//				if(diagramBuilder.canAdd(edge, startNode, endNode))
 				
-				edge.connect(pLoadedDiagramFile.context().getNode(object.getInt("start")),
-						pLoadedDiagramFile.context().getNode(object.getInt("end")),
-						pLoadedDiagramFile.context().pDiagram());
-				
-				pLoadedDiagramFile.context().pDiagram().addEdge(edge);
 			} 
 			catch (ReflectiveOperationException exception)
 			{
