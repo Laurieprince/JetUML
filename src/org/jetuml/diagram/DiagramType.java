@@ -156,6 +156,22 @@ public enum DiagramType
 	}
 	
 	/**
+	 * @param pName The name of the diagram type, to match the getName() field. Can be null.
+	 * @return True if valid Diagram name.
+	 */
+	public static boolean isValidName(String pName)
+	{
+		for( DiagramType type : DiagramType.values() )
+		{
+			if( type.getName().equals(pName) )
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
 	 * @return The file extension for this type of diagram.
 	 */
 	public String getFileExtension()

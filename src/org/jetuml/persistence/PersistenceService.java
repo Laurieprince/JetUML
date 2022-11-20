@@ -78,6 +78,14 @@ public final class PersistenceService
 				new InputStreamReader(new FileInputStream(pFile), StandardCharsets.UTF_8)))
 		{
 			JSONObject jsonObject = new JSONObject(in.lines().collect(Collectors.joining("\n")));
+			
+			LoadedDiagramFile loadedDiagramFile = FirstValidationPass.validate(jsonObject);
+			
+			if(loadedDiagramFile.hasError())
+			{
+				return loadedDiagramFile;
+			}
+			
 			return JsonDecoder.decode(jsonObject);
 		}
 		catch( JSONException e )
