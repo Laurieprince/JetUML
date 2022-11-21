@@ -86,7 +86,11 @@ public final class PersistenceService
 				return loadedDiagramFile;
 			}
 			
-			return JsonDecoder.decode(jsonObject);
+			var diagram =  JsonDecoder.decode(jsonObject);
+			
+			// TODO : Third validation pass
+			
+			return loadedDiagramFile; 
 		}
 		catch( JSONException e )
 		{
