@@ -32,7 +32,6 @@ import org.jetuml.diagram.Diagram;
  */
 public class LoadedDiagramFile {
 	private Diagram aDiagram;
-	private DeserializationContext aContext; 
 	private List<String> aErrors = new ArrayList<String>();
 
 	LoadedDiagramFile(){
@@ -45,10 +44,6 @@ public class LoadedDiagramFile {
 	public Diagram diagram()
 	{
 		return aDiagram;
-	}
-	
-	public DeserializationContext context() {
-		return aContext;
 	}
 	
 	public boolean hasError() {
@@ -65,6 +60,5 @@ public class LoadedDiagramFile {
 	
 	public void setDiagram(Diagram pDiagram) {
 		aDiagram = pDiagram;
-		aContext = new DeserializationContext(aDiagram);
 	}
 }

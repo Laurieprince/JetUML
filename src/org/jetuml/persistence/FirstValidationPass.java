@@ -20,13 +20,14 @@ public class FirstValidationPass {
 	private static final String MISSING_PROPERTY_ERROR = "Required property is missing: \"%s\".";
 	private static final String UNDEFINED_PROPERTY_ERROR = "\"%s\" is undefined for %s.";
 	
-	private static Set<Integer> nodeIds = new HashSet<Integer>();
+	private static Set<Integer> nodeIds;
 	
 	private FirstValidationPass() {}
 	
 	public static LoadedDiagramFile validate(JSONObject pDiagram)
 	{
 		assert pDiagram != null;
+		nodeIds = new HashSet<Integer>();
 		try
 		{
 			LoadedDiagramFile loadedDiagramFile = new LoadedDiagramFile();
@@ -38,6 +39,7 @@ public class FirstValidationPass {
 			DiagramType diagramType = DiagramType.fromName(pDiagram.getString("diagram"));
 			
 			validateNodes(loadedDiagramFile, pDiagram, diagramType);
+			validateNodeChildren(loadedDiagramFile, pDiagram, diagramType);
 			validateEdges(loadedDiagramFile, pDiagram, diagramType);
 
 			return loadedDiagramFile;
@@ -81,12 +83,12 @@ public class FirstValidationPass {
 			{
 				JSONObject object = nodes.getJSONObject(i); 
 				
-				if(!validateNodeHardProperties(pLoadedDiagramFile, object)) 	
+				if(!validateNodeBaseProperties(pLoadedDiagramFile, object)) 	
 				{
 					continue;
 				}
 				validateNodeId(pLoadedDiagramFile, object);
-				validateNodeProperties(pLoadedDiagramFile, object, diagramType); 
+				validateNodeProperties(pLoadedDiagramFile, object, diagramType);
 			} 
 			catch (ReflectiveOperationException exception)
 			{
@@ -95,13 +97,12 @@ public class FirstValidationPass {
 		}
 	}
 	
-	private static boolean validateNodeHardProperties(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
+	private static boolean validateNodeBaseProperties(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
 	{	
-		if(pObject.has("id") &&  pObject.has("type") && pObject.has("x") && pObject.has("y"))
+		if(pObject.has("id") && pObject.has("type") && pObject.has("x") && pObject.has("y"))
 		{
 			return true;
 		}
-		
 		if (!pObject.has("id"))
 		{
 			pLoadedDiagramFile.addError(String.format(MISSING_PROPERTY_ERROR, "id"));
@@ -127,7 +128,7 @@ public class FirstValidationPass {
 		if(nodeIds.contains(nodeId))
 		{
 			pLoadedDiagramFile.addError("Duplicate node id " + nodeId);
-		} 
+		}
 		else
 		{
 			nodeIds.add(nodeId);
@@ -138,6 +139,7 @@ public class FirstValidationPass {
 	{
 		Class<?> nodeClass = Class.forName(PREFIX_NODES + pObject.getString("type")); 
 		
+		// TODO: Does not include CallNode and ConstructorEdge
 		var pList = diagramType.getPrototypes().stream().map(x -> x.getClass()).toList();
 		
 		if(!pList.contains(nodeClass))
@@ -153,6 +155,28 @@ public class FirstValidationPass {
 			if (!pObject.has(property.name().external()))
 			{
 				pLoadedDiagramFile.addError(String.format(UNDEFINED_PROPERTY_ERROR, property.name().external(), nodeClass.getName()));
+			}
+		}
+	}
+	
+	private static void validateNodeChildren(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject, DiagramType diagramType)
+	{
+		JSONArray nodes = pObject.getJSONArray("nodes");
+		for( int i = 0; i < nodes.length(); i++ )
+		{
+			JSONObject object = nodes.getJSONObject(i);
+			if( object.has("children"))
+			{
+				// TODO: Validate a node can be a child
+				
+				JSONArray children = object.getJSONArray("children");
+				for( int j = 0; j < children.length(); j++ )
+				{
+					if(!nodeIds.contains(children.getInt(j)))
+					{
+						pLoadedDiagramFile.addError(String.format("children node id %d is not present.", children.getInt(j)));
+					}
+				}
 			}
 		}
 	}
@@ -173,12 +197,13 @@ public class FirstValidationPass {
 			{
 				JSONObject object = edges.getJSONObject(i);
 
-				if(!validateEdgeHardProperties(pLoadedDiagramFile, object, diagramType)) {// TODO: Rename method; return false if not valid
+				if(!validateEdgeBaseProperties(pLoadedDiagramFile, object, diagramType))
+				{
 					continue;
 				}
-				validateEdgeEndPoints(pLoadedDiagramFile, object); // TODO: Continue Validation
+				validateEdgeEndPoints(pLoadedDiagramFile, object); 
 				validateEdgeProperties(pLoadedDiagramFile, object, diagramType);
-			} 
+			}
 			catch (ReflectiveOperationException exception)
 			{
 				throw new DeserializationException("Cannot instantiate serialized object", exception);
@@ -186,12 +211,11 @@ public class FirstValidationPass {
 		}
 	}
 	
-	private static boolean validateEdgeHardProperties(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject, DiagramType diagramType)
+	private static boolean validateEdgeBaseProperties(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject, DiagramType diagramType)
 	{
 		if(pObject.has("type") && pObject.has("start") && pObject.has("end")) {
 			return true;
 		}
-		
 		if(!pObject.has("type"))
 		{
 			pLoadedDiagramFile.addError(String.format(MISSING_PROPERTY_ERROR, "type"));
