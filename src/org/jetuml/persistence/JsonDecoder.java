@@ -25,7 +25,6 @@ import org.jetuml.diagram.DiagramType;
 import org.jetuml.diagram.Edge;
 import org.jetuml.diagram.Node;
 import org.jetuml.diagram.Property;
-import org.jetuml.diagram.builder.DiagramBuilder;
 import org.jetuml.geom.Point;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -46,24 +45,21 @@ public final class JsonDecoder
 	 * @return The decoded diagram.
 	 * @throws DeserializationException If it's not possible to decode the object into a valid diagram.
 	 */
-	public static LoadedDiagramFile decode(JSONObject pDiagram)
+	public static Diagram decode(JSONObject pDiagram)
 	{
 		assert pDiagram != null;
 		try
 		{
-			LoadedDiagramFile loadedDiagramFile = new LoadedDiagramFile();
 			Diagram diagram = new Diagram(DiagramType.fromName(pDiagram.getString("diagram")));
-			loadedDiagramFile.setDiagram(diagram);
-			decodeNodes(loadedDiagramFile, pDiagram);
-			restoreChildren(loadedDiagramFile, pDiagram);
-			restoreRootNodes(loadedDiagramFile);
-			DiagramBuilder builder = DiagramType.newBuilderInstanceFor(diagram);
-			decodeEdges(loadedDiagramFile, pDiagram, builder);
-			loadedDiagramFile.context().attachNodes();
-
-			return loadedDiagramFile;
-		} 
-		catch (JSONException | IllegalArgumentException exception)
+			DeserializationContext context = new DeserializationContext(diagram);
+			decodeNodes(context, pDiagram);
+			restoreChildren(context, pDiagram);
+			restoreRootNodes(context);
+			decodeEdges(context, pDiagram);
+			context.attachNodes();
+			return diagram;
+		}
+		catch( JSONException | IllegalArgumentException exception )
 		{
 			throw new DeserializationException("Cannot decode serialized object", exception);
 		}
@@ -74,29 +70,24 @@ public final class JsonDecoder
 	 * to represent them.
 	 * throws Deserialization Exception
 	 */
-	private static void decodeNodes(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
+	private static void decodeNodes(DeserializationContext pContext, JSONObject pObject)
 	{
 		JSONArray nodes = pObject.getJSONArray("nodes");
-		
 		for( int i = 0; i < nodes.length(); i++ )
 		{
 			try
 			{
 				JSONObject object = nodes.getJSONObject(i);
-				
-				Class<?> nodeClass = Class.forName(PREFIX_NODES + object.getString("type")); 
-				
+				Class<?> nodeClass = Class.forName(PREFIX_NODES + object.getString("type"));
 				Node node = (Node) nodeClass.getDeclaredConstructor().newInstance();
-
 				node.moveTo(new Point(object.getInt("x"), object.getInt("y")));
 				for( Property property : node.properties() )
 				{
 					property.set(object.get(property.name().external()));
 				}
-				
-				pLoadedDiagramFile.context().addNode(node, object.getInt("id"));
-			} 
-			catch (ReflectiveOperationException exception)
+				pContext.addNode(node, object.getInt("id"));
+			}
+			catch( ReflectiveOperationException exception )
 			{
 				throw new DeserializationException("Cannot instantiate serialized object", exception);
 			}
@@ -106,13 +97,13 @@ public final class JsonDecoder
 	/* 
 	 * Discovers the root nodes and stores them in the diagram.
 	 */
-	private static void restoreRootNodes(LoadedDiagramFile pLoadedDiagramFile)
+	private static void restoreRootNodes(DeserializationContext pContext)
 	{
-		for( Node node : pLoadedDiagramFile.context() )
+		for( Node node : pContext )
 		{
 			if( !node.hasParent() )
 			{
-				pLoadedDiagramFile.context().pDiagram().addRootNode(node);
+				pContext.pDiagram().addRootNode(node);
 			}
 		}
 	}
@@ -121,7 +112,7 @@ public final class JsonDecoder
 	 * Restores the parent-child hierarchy within the context's diagram. Assumes
 	 * the context has been initialized with all the nodes.
 	 */
-	private static void restoreChildren(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject)
+	private static void restoreChildren(DeserializationContext pContext, JSONObject pObject)
 	{
 		JSONArray nodes = pObject.getJSONArray("nodes");
 		for( int i = 0; i < nodes.length(); i++ )
@@ -129,11 +120,11 @@ public final class JsonDecoder
 			JSONObject object = nodes.getJSONObject(i);
 			if( object.has("children"))
 			{
-				Node node = pLoadedDiagramFile.context().getNode(object.getInt("id"));
+				Node node = pContext.getNode( object.getInt("id"));
 				JSONArray children = object.getJSONArray("children");
 				for( int j = 0; j < children.length(); j++ )
 				{
-					node.addChild(pLoadedDiagramFile.context().getNode(children.getInt(j)));
+					node.addChild(pContext.getNode(children.getInt(j)));
 				}
 			}
 		}
@@ -144,40 +135,25 @@ public final class JsonDecoder
 	 * to represent them.
 	 * throws Deserialization Exception
 	 */
-	private static void decodeEdges(LoadedDiagramFile pLoadedDiagramFile, JSONObject pObject, DiagramBuilder builder)
+	private static void decodeEdges(DeserializationContext pContext, JSONObject pObject)
 	{
 		JSONArray edges = pObject.getJSONArray("edges");
-		for (int i = 0; i < edges.length(); i++)
+		for( int i = 0; i < edges.length(); i++ )
 		{
 			try
 			{
 				JSONObject object = edges.getJSONObject(i);
-
 				Class<?> edgeClass = Class.forName(PREFIX_EDGES + object.getString("type"));
-
 				Edge edge = (Edge) edgeClass.getDeclaredConstructor().newInstance();
 				
 				for( Property property : edge.properties())
 				{
 					property.set(object.get(property.name().external()));
 				}
-				
-				// Validate the edge can be connected to startNode and endNode
-				var startNode = pLoadedDiagramFile.context().getNode(object.getInt("start"));
-				var endNode = pLoadedDiagramFile.context().getNode(object.getInt("end"));
-				
-				if(builder.canAdd(edge, startNode.position(), endNode.position()))
-				{
-					edge.connect(startNode, endNode, pLoadedDiagramFile.context().pDiagram());
-					
-					pLoadedDiagramFile.context().pDiagram().addEdge(edge);
-				}
-				else
-				{
-					pLoadedDiagramFile.addError(String.format("Can't connect %s from %s to %s.", edge.toString(), startNode.toString(), endNode.toString()));
-				}
-			} 
-			catch (ReflectiveOperationException exception)
+				edge.connect(pContext.getNode(object.getInt("start")), pContext.getNode(object.getInt("end")), pContext.pDiagram());
+				pContext.pDiagram().addEdge(edge);
+			}
+			catch( ReflectiveOperationException exception )
 			{
 				throw new DeserializationException("Cannot instantiate serialized object", exception);
 			}
