@@ -51,7 +51,7 @@ import org.jetuml.diagram.DiagramType;
 import org.jetuml.gui.tips.TipDialog;
 import org.jetuml.persistence.DeserializationException;
 import org.jetuml.persistence.PersistenceService;
-import org.jetuml.persistence.LoadedDiagramFile;
+import org.jetuml.persistence.ValidationContext;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Alert;
@@ -292,17 +292,20 @@ public class EditorFrame extends BorderPane
 			return;
 		}
 		
-		try 
+		try
 		{
-			LoadedDiagramFile loadedDiagramFile = PersistenceService.read(pFile); 
+			ValidationContext validationContext = PersistenceService.read(pFile); 
 			
-			if(!loadedDiagramFile.hasError()) {
-				DiagramTab frame = new DiagramTab(loadedDiagramFile.diagram());
+			if(validationContext.isValid())
+			{
+				DiagramTab frame = new DiagramTab(validationContext.diagram());
 				frame.setFile(pFile.getAbsoluteFile());
 				addRecentFile(pFile.getPath());
 				insertGraphFrameIntoTabbedPane(frame);
-			} else {
-				Alert alert = new Alert(AlertType.ERROR,loadedDiagramFile.getErrors().toString(), ButtonType.OK);
+			}
+			else 
+			{
+				Alert alert = new Alert(AlertType.ERROR,validationContext.getErrors().toString(), ButtonType.OK);
 				alert.setTitle("JSON parsing error");
 				alert.initOwner(aMainStage);
 				alert.showAndWait();

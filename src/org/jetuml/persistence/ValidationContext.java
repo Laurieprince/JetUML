@@ -20,45 +20,64 @@
  *******************************************************************************/
 package org.jetuml.persistence;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.jetuml.diagram.Diagram;
+import org.json.JSONObject;
 
-/**
- * Wrapper for a diagram object that also stores
- * the version of JetUML with which the diagram was
- * serialized, and whether the loaded diagram contains errors.
- */
-public class LoadedDiagramFile {
-	private Diagram aDiagram;
+public class ValidationContext
+{
+	private Optional<File> aFile;
+	private Optional<JSONObject> aJSONObject;
+	private Optional<Diagram> aDiagram;
 	private List<String> aErrors = new ArrayList<String>();
 
-	LoadedDiagramFile(){
-		aDiagram = null;
+	ValidationContext(File pFile)
+	{
+		assert pFile != null;
+		aFile = Optional.of(pFile);
+	}
+
+	public File file()
+	{
+		return aFile.get();
 	}
 	
-	/**
-	 * @return The diagram wrapped by this object.
-	 */
+	public JSONObject JSONObject()
+	{
+		return aJSONObject.get();
+	}
+	
+	public void setJSONObject(JSONObject pJSONObject)
+	{
+		aJSONObject = Optional.of(pJSONObject);
+	}
+	
 	public Diagram diagram()
 	{
-		return aDiagram;
+		return aDiagram.get();
 	}
 	
-	public boolean hasError() {
-		return !aErrors.isEmpty();
+	public void setDiagram(Diagram pDiagram)
+	{
+		aDiagram = Optional.of(pDiagram);
 	}
 	
-	public void addError(String pError) {
+	public boolean isValid()
+	{
+		return aErrors.isEmpty();
+	}
+	
+	public void addError(String pError)
+	{
 		aErrors.add(pError);
 	}
 	
-	public List<String> getErrors() {
+	public List<String> getErrors()
+	{
 		return aErrors;
-	}
-	
-	public void setDiagram(Diagram pDiagram) {
-		aDiagram = pDiagram;
 	}
 }

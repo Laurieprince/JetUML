@@ -300,7 +300,7 @@ public final class SequenceDiagramRenderer extends AbstractDiagramRenderer
 	private Optional<Node> findRoot()
 	{
 		Set<Node> calledNodes = diagram().edges().stream()
-				.filter(edge -> edge.getClass().isAssignableFrom(CallEdge.class)) // Includes subclasses, such as constructor edges
+				.filter(edge -> CallEdge.class.isAssignableFrom(edge.getClass())) // Includes subclasses, such as constructor edges
 				.map(Edge::getEnd)
 				.collect(Collectors.toSet());
 		return diagram().allNodes().stream()

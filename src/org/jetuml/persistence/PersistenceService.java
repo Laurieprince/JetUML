@@ -71,30 +71,25 @@ public final class PersistenceService
 	 * @throws DeserializationException if there is a problem decoding the file.
 	 * @pre pFile != null
 	 */
-	public static LoadedDiagramFile read(File pFile) throws IOException, DeserializationException
+	public static ValidationContext read(File pFile) throws IOException, DeserializationException
 	{
 		assert pFile != null;
-		try( BufferedReader in = new BufferedReader(
-				new InputStreamReader(new FileInputStream(pFile), StandardCharsets.UTF_8)))
-		{
-			JSONObject jsonObject = new JSONObject(in.lines().collect(Collectors.joining("\n")));
-			
-			LoadedDiagramFile loadedDiagramFile = FirstValidationPass.validate(jsonObject);
-			
-			if(loadedDiagramFile.hasError())
-			{
-				return loadedDiagramFile;
-			}
-			
-			var diagram =  JsonDecoder.decode(jsonObject);
-			loadedDiagramFile.setDiagram(diagram);
-			// TODO : Third validation pass
-			
-			return loadedDiagramFile;
-		}
-		catch( JSONException e )
-		{
-			throw new DeserializationException("Cannot decode the file", e);
-		}
+		ValidationContext validationContext = new ValidationContext(pFile);
+		
+		JSONValidator jsonValidator = new JSONValidator(validationContext);
+		jsonValidator.validate();
+		if(!validationContext.isValid()) return validationContext;
+		
+		SchemaValidator schemaValidator = new SchemaValidator(validationContext);
+		schemaValidator.validate();
+		if(!validationContext.isValid()) return validationContext;
+		
+		var diagram =  JsonDecoder.decode(validationContext.JSONObject());
+		validationContext.setDiagram(diagram);
+		
+		SemanticValidator semanticValidator = new SemanticValidator(validationContext);
+		semanticValidator.validate();
+		
+		return validationContext;
 	}
 }
