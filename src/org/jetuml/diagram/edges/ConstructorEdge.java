@@ -26,6 +26,13 @@ package org.jetuml.diagram.edges;
  */
 public final class ConstructorEdge extends CallEdge
 {
+	
+	@Override
+	public final boolean isToolElement()
+	{
+		return false;
+	}
+	
 	/**
 	 * Creates a new constructor edge.
 	 */

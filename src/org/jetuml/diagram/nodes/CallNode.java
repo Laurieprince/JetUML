@@ -118,4 +118,10 @@ public class CallNode extends AbstractNode
 	{
 		return String.format("[Call node #%d of %s]", getParent().getChildren().indexOf(this)+1, getParent().toString());
 	}
+	
+	@Override
+	public final boolean isToolElement()
+	{
+		return false;
+	}
 }

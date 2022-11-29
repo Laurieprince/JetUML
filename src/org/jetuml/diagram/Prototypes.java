@@ -28,6 +28,7 @@ import java.util.Map;
 import org.jetuml.diagram.edges.AggregationEdge;
 import org.jetuml.diagram.edges.AssociationEdge;
 import org.jetuml.diagram.edges.CallEdge;
+import org.jetuml.diagram.edges.ConstructorEdge;
 import org.jetuml.diagram.edges.DependencyEdge;
 import org.jetuml.diagram.edges.GeneralizationEdge;
 import org.jetuml.diagram.edges.NoteEdge;
@@ -39,6 +40,7 @@ import org.jetuml.diagram.edges.UseCaseAssociationEdge;
 import org.jetuml.diagram.edges.UseCaseDependencyEdge;
 import org.jetuml.diagram.edges.UseCaseGeneralizationEdge;
 import org.jetuml.diagram.nodes.ActorNode;
+import org.jetuml.diagram.nodes.CallNode;
 import org.jetuml.diagram.nodes.ClassNode;
 import org.jetuml.diagram.nodes.FieldNode;
 import org.jetuml.diagram.nodes.FinalStateNode;
@@ -49,6 +51,7 @@ import org.jetuml.diagram.nodes.NoteNode;
 import org.jetuml.diagram.nodes.ObjectNode;
 import org.jetuml.diagram.nodes.PackageDescriptionNode;
 import org.jetuml.diagram.nodes.PackageNode;
+import org.jetuml.diagram.nodes.PointNode;
 import org.jetuml.diagram.nodes.StateNode;
 import org.jetuml.diagram.nodes.UseCaseNode;
 
@@ -61,6 +64,7 @@ public final class Prototypes
 	private final Map<DiagramElement, String> aKeys = new IdentityHashMap<>();
 	
 	public static final DiagramElement NOTE = create(new NoteNode(), "note");
+	public static final DiagramElement POINT = create(new PointNode(), "point");
 	public static final DiagramElement NOTE_CONNECTOR = create(new NoteEdge(), "note_connector");
 	
 	public static final DiagramElement CLASS = create(new ClassNode(), "class");
@@ -81,6 +85,8 @@ public final class Prototypes
 			create(new ImplicitParameterNode(), "implicit_parameter");
 	public static final DiagramElement METHOD_CALL = create(new CallEdge(), "method_call");
 	public static final DiagramElement METHOD_RETURN = create(new ReturnEdge(), "method_return");
+	public static final DiagramElement CALL = create(new CallNode(), "call");
+	public static final DiagramElement CONSTRUCTOR = create(new ConstructorEdge(), "constructor");
 	
 	public static final DiagramElement STATE = create(new StateNode(), "state");
 	public static final DiagramElement START_STATE = create(new InitialStateNode(), "start_state");

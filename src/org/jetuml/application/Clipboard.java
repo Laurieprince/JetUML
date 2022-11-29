@@ -34,7 +34,6 @@ import org.jetuml.diagram.Diagram;
 import org.jetuml.diagram.DiagramElement;
 import org.jetuml.diagram.Edge;
 import org.jetuml.diagram.Node;
-import org.jetuml.diagram.nodes.PointNode;
 import org.jetuml.geom.Point;
 
 /**
@@ -292,12 +291,7 @@ public final class Clipboard
 	
 	private static boolean validElementFor( DiagramElement pElement, Diagram pDiagram )
 	{
-		// PointNodes are allowed in all diagrams despite not being contained in prototypes.
-		if ( pElement.getClass() == PointNode.class ) 
-		{
-			return true;
-		}
-		return pDiagram.getPrototypes().stream()
+		return pDiagram.getAllPrototypes().stream()
 				.map(Object::getClass)
 				.anyMatch(Predicate.isEqual(pElement.getClass()));
 	}

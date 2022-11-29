@@ -26,6 +26,11 @@ package org.jetuml.diagram;
 public interface DiagramElement extends Cloneable
 {
 	/**
+	 * @return True is the object can be a tool.
+	 */
+	boolean isToolElement();
+	
+	/**
 	 * @return A set of properties that define this object.
 	 */
 	Properties properties();

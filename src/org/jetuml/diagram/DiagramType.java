@@ -25,6 +25,7 @@ import static org.jetuml.application.ApplicationResources.RESOURCES;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.jetuml.diagram.builder.ClassDiagramBuilder;
 import org.jetuml.diagram.builder.DiagramBuilder;
@@ -62,7 +63,9 @@ public enum DiagramType
 					Prototypes.ASSOCIATION,
 					Prototypes.AGGREGATION,
 					Prototypes.COMPOSITION,
-					Prototypes.NOTE_CONNECTOR}),
+					Prototypes.NOTE_CONNECTOR,
+					Prototypes.POINT,
+					}),
 	
 	SEQUENCE(
 			"SequenceDiagram",
@@ -74,7 +77,11 @@ public enum DiagramType
 					Prototypes.NOTE,
 					Prototypes.METHOD_CALL,
 					Prototypes.METHOD_RETURN,
-					Prototypes.NOTE_CONNECTOR}), 
+					Prototypes.NOTE_CONNECTOR,
+					Prototypes.CALL,
+					Prototypes.CONSTRUCTOR,
+					Prototypes.POINT,
+					}), 
 	
 	STATE(
 			"StateDiagram",
@@ -87,7 +94,9 @@ public enum DiagramType
 					Prototypes.END_STATE,
 					Prototypes.NOTE,
 					Prototypes.TRANSITION,
-					Prototypes.NOTE_CONNECTOR}), 
+					Prototypes.NOTE_CONNECTOR,
+					Prototypes.POINT,
+					}),
 	
 	OBJECT(
 			"ObjectDiagram",
@@ -100,7 +109,9 @@ public enum DiagramType
 					Prototypes.NOTE,
 					Prototypes.REFERENCE,
 					Prototypes.COLLABORATION,
-					Prototypes.NOTE_CONNECTOR}), 
+					Prototypes.NOTE_CONNECTOR,
+					Prototypes.POINT,
+					}), 
 	
 	USECASE(
 			"UseCaseDiagram",
@@ -115,7 +126,9 @@ public enum DiagramType
 					Prototypes.USE_CASE_EXTENDS, 
 					Prototypes.USE_CASE_INCLUDES, 
 					Prototypes.USE_CASE_GENERALIZATION, 
-					Prototypes.NOTE_CONNECTOR}); 
+					Prototypes.NOTE_CONNECTOR,
+					Prototypes.POINT,
+					}); 
 	
 	/* aName is an internal name used for referring to objects of a certain diagram
 	 * type in externalized representations, such as persisted versions of the diagram
@@ -156,22 +169,6 @@ public enum DiagramType
 	}
 	
 	/**
-	 * @param pName The name of the diagram type, to match the getName() field. Can be null.
-	 * @return True if valid Diagram name.
-	 */
-	public static boolean isValidName(String pName)
-	{
-		for( DiagramType type : DiagramType.values() )
-		{
-			if( type.getName().equals(pName) )
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
 	 * @return The file extension for this type of diagram.
 	 */
 	public String getFileExtension()
@@ -195,6 +192,17 @@ public enum DiagramType
 	 * @return A non-null list of prototypes
 	 */   
 	public List<DiagramElement> getPrototypes()
+	{
+		return Arrays.asList(aPrototypes).stream().filter(x -> x.isToolElement()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets all the diagram elements.
+	 * The list returned is a copy of the prototypes: 
+	 * it can be safely modified.
+	 * @return A non-null list of prototypes
+	 */   
+	public List<DiagramElement> getAllPrototypes()
 	{
 		return Arrays.asList(aPrototypes);
 	}

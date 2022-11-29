@@ -240,6 +240,17 @@ public final class Diagram implements DiagramData
 	{
 		return aType.getPrototypes();
 	}
+	
+	/**
+	 * Gets the types of all elements that can be using prototypes for a diagram type. 
+	 * The list returned is a copy of the prototypes: it can be safely modified.
+	 * 
+	 * @return A non-null list of node prototypes
+	 */
+	public List<DiagramElement> getAllPrototypes()
+	{
+		return aType.getAllPrototypes();
+	}
 
 	/**
 	 * @param pNode The node to test for

@@ -27,4 +27,10 @@ package org.jetuml.diagram.nodes;
  *  connector.
  */
 public final class PointNode extends AbstractNode
-{}
+{
+	@Override
+	public final boolean isToolElement()
+	{
+		return false;
+	}	
+}
