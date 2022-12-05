@@ -185,7 +185,7 @@ public class SchemaValidator
 	{
 		String elementType = pObject.getString("type");
 		
-		Optional<DiagramElement> diagramElement =  aDiagramType.getAllPrototypes().stream()
+		Optional<DiagramElement> diagramElement =  aDiagramType.getPrototypes().stream()
 				.filter(x -> x.getClass().getSimpleName().equals(elementType))
 				.findFirst();
 		

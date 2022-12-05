@@ -238,7 +238,7 @@ public final class Diagram implements DiagramData
 	 */
 	public List<DiagramElement> getPrototypes()
 	{
-		return aType.getPrototypes();
+		return aType.getToolPrototypes();
 	}
 	
 	/**
@@ -249,7 +249,7 @@ public final class Diagram implements DiagramData
 	 */
 	public List<DiagramElement> getAllPrototypes()
 	{
-		return aType.getAllPrototypes();
+		return aType.getPrototypes();
 	}
 
 	/**

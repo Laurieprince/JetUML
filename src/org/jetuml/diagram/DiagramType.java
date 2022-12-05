@@ -191,7 +191,7 @@ public enum DiagramType
 	 * it can be safely modified.
 	 * @return A non-null list of prototypes
 	 */   
-	public List<DiagramElement> getPrototypes()
+	public List<DiagramElement> getToolPrototypes()
 	{
 		return Arrays.asList(aPrototypes).stream().filter(x -> x.isToolElement()).collect(Collectors.toList());
 	}
@@ -202,7 +202,7 @@ public enum DiagramType
 	 * it can be safely modified.
 	 * @return A non-null list of prototypes
 	 */   
-	public List<DiagramElement> getAllPrototypes()
+	public List<DiagramElement> getPrototypes()
 	{
 		return Arrays.asList(aPrototypes);
 	}
