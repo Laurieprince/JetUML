@@ -60,7 +60,7 @@ public class SchemaValidator
 		}
 		catch(IllegalArgumentException e)
 		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.invalid_diagram_name"), diagramName));
+			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_diagram_name"), diagramName));
 			return false;
 		}
 		return true;
@@ -98,22 +98,13 @@ public class SchemaValidator
 		{
 			return true;
 		}
-		if (!pObject.has("id"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "id"));
+		
+		for(NodeBaseProperties nodeBaseProperty : NodeBaseProperties.values()) {
+			if(!pObject.has(nodeBaseProperty.getLabel())) {
+				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), nodeBaseProperty.getLabel()));
+			}
 		}
-		if (!pObject.has("type"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "type"));
-		}
-		if (!pObject.has("x"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "x"));
-		}
-		if (!pObject.has("y"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "y"));
-		}
+		
 		return false;
 	}
 
@@ -126,6 +117,7 @@ public class SchemaValidator
 			if (object.has("children"))
 			{
 				// TODO: Validate a node can be a child
+				// TODO: Validate a node can be a Parent 
 				JSONArray children = object.getJSONArray("children");
 				for (int j = 0; j < children.length(); j++)
 				{
@@ -165,17 +157,11 @@ public class SchemaValidator
 		{
 			return true;
 		}
-		if (!pObject.has("type"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "type"));
-		}
-		if (!pObject.has("start"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "start"));
-		}
-		if (!pObject.has("end"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "end"));
+
+		for(EdgeBaseProperties edgeBaseProperty : EdgeBaseProperties.values()) {
+			if(!pObject.has(edgeBaseProperty.getLabel())) {
+				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), edgeBaseProperty.getLabel()));
+			}
 		}
 		return false;
 	}

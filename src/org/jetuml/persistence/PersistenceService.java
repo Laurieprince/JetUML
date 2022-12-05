@@ -20,20 +20,14 @@
  *******************************************************************************/
 package org.jetuml.persistence;
 
-import java.io.BufferedReader;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
-
 import org.jetuml.diagram.Diagram;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Services for saving and loading Diagram objects. The files are encoded
@@ -76,7 +70,7 @@ public final class PersistenceService
 		assert pFile != null;
 		ValidationContext validationContext = new ValidationContext(pFile);
 		
-		JSONValidator jsonValidator = new JSONValidator(validationContext);
+		JsonValidator jsonValidator = new JsonValidator(validationContext);
 		jsonValidator.validate();
 		if(!validationContext.isValid()) return validationContext;
 		

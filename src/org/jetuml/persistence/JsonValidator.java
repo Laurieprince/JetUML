@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class JSONValidator
+public class JsonValidator
 {
 	private ValidationContext aValidationContext;
 	private File aFile;
 	
-	public JSONValidator(ValidationContext pvalidationContext)
+	public JsonValidator(ValidationContext pvalidationContext)
 	{
 		assert pvalidationContext != null && pvalidationContext.file() != null;
 		aValidationContext = pvalidationContext;
