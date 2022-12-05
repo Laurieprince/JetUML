@@ -248,7 +248,7 @@ public class SequenceDiagramBuilder extends DiagramBuilder
 		{
 			if( node instanceof ImplicitParameterNode && aDiagramRenderer.contains(node, pPoint) )
 			{
-				if( !(pPoint.getY() < implicitParameterNodeRenderer().getTopRectangle(node).getMaxY() + CALL_NODE_YGAP) )
+				if( !(pPoint.getY() < implicitParameterRenderer().getTopRectangle(node).getMaxY() + CALL_NODE_YGAP) )
 				{
 					return Optional.of( (ImplicitParameterNode)node );
 				}
@@ -257,7 +257,7 @@ public class SequenceDiagramBuilder extends DiagramBuilder
 		return Optional.empty();
 	}
 	
-	private ImplicitParameterNodeRenderer implicitParameterNodeRenderer()
+	private ImplicitParameterNodeRenderer implicitParameterRenderer()
 	{
 		return (ImplicitParameterNodeRenderer)aDiagramRenderer.rendererFor(ImplicitParameterNode.class);
 	}
