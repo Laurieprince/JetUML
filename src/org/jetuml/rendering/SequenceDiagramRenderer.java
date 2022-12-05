@@ -51,7 +51,9 @@ import org.jetuml.rendering.nodes.ImplicitParameterNodeRenderer;
 import javafx.scene.canvas.GraphicsContext;
 
 /**
- * The renderer for sequence diagrams.
+ * The renderer for sequence diagrams. The implementation of this renderer assumes
+ * that any sequence diagram has either zero call nodes or a single root call node, namely, 
+ * only one call node with no callers.
  */
 public final class SequenceDiagramRenderer extends AbstractDiagramRenderer
 { 
@@ -181,6 +183,9 @@ public final class SequenceDiagramRenderer extends AbstractDiagramRenderer
 		return result;
 	}
 	
+	// This method assumes a single root nodes, and traces all call nodes
+	// from this root node. This creates a problem when pasting implicit parameter
+	// nodes that contain a dangling call node.
 	private void computeYPositions()
 	{
 		aCallNodeTopCoordinate.clear();
@@ -303,10 +308,17 @@ public final class SequenceDiagramRenderer extends AbstractDiagramRenderer
 				.filter(edge -> CallEdge.class.isAssignableFrom(edge.getClass())) // Includes subclasses, such as constructor edges
 				.map(Edge::getEnd)
 				.collect(Collectors.toSet());
-		return diagram().allNodes().stream()
-			.filter(node -> node.getClass() == CallNode.class)
-			.filter(node -> !calledNodes.contains(node))
-			.findFirst();
+		List<Node> rootNode = diagram().allNodes().stream()
+				.filter(node -> node.getClass() == CallNode.class)
+				.filter(node -> !calledNodes.contains(node))
+				.collect(Collectors.toList());
+		assert rootNode.size() <= 1; 
+		Optional<Node> result = Optional.empty();
+		if( !rootNode.isEmpty() )
+		{
+			result = Optional.of(rootNode.get(0));
+		}
+		return result;
 	}
 	
 	public int getCenterXCoordinate(ImplicitParameterNode pNode)
