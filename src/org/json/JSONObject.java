@@ -35,7 +35,7 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -163,13 +163,13 @@ public class JSONObject {
      * Construct an empty JSONObject.
      */
     public JSONObject() {
-        // HashMap is used on purpose to ensure that elements are unordered by 
+        // LinkedHashMap is used on purpose to ensure that elements are ordered by 
         // the specification.
         // JSON tends to be a portable transfer format to allows the container 
         // implementations to rearrange their items for a faster element 
         // retrieval based on associative access.
         // Therefore, an implementation mustn't rely on the order of the item.
-        this.map = new HashMap<>();
+        this.map = new LinkedHashMap<>();
     }
 
     /**
@@ -250,9 +250,9 @@ public class JSONObject {
      */
     public JSONObject(Map<?, ?> m) {
         if (m == null) {
-            this.map = new HashMap<>();
+            this.map = new LinkedHashMap<>();
         } else {
-            this.map = new HashMap<>(m.size());
+            this.map = new LinkedHashMap<>(m.size());
         	for (final Entry<?, ?> e : m.entrySet()) {
                 final Object value = e.getValue();
                 if (value != null) {
@@ -1029,7 +1029,7 @@ public class JSONObject {
      * @return a java.util.Map containing the entries of this object
      */
     public Map<String, Object> toMap() {
-        Map<String, Object> results = new HashMap<>();
+        Map<String, Object> results = new LinkedHashMap<>();
         for (Entry<String, Object> entry : this.entrySet()) {
             Object value;
             if (entry.getValue() == null || NULL.equals(entry.getValue())) {
