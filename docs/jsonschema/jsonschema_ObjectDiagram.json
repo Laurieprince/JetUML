@@ -1,8 +1,8 @@
 {
    "$schema": "https://json-schema.org/draft/2019-09/schema",
-   "$id": "docs\\jsonschema_UseCaseDiagram.json",
-   "title": "UseCaseDiagram",
-   "description": "UseCaseDiagram",
+   "$id": "docs\\jsonschema\\jsonschema_ObjectDiagram.json",
+   "title": "ObjectDiagram",
+   "description": "ObjectDiagram",
    "type": "object",
    "required": [
       "diagram",
@@ -11,7 +11,7 @@
       "version"
    ],
    "properties": {
-      "diagram": {"const": "UseCaseDiagram"},
+      "diagram": {"const": "ObjectDiagram"},
       "nodes": {
          "type": "array",
          "description": "description",
@@ -22,33 +22,37 @@
                "y": {"type": "integer"},
                "id": {"type": "integer"},
                "type": {"enum": [
+                  "ObjectNode",
                   "PointNode",
-                  "UseCaseNode",
-                  "NoteNode",
-                  "ActorNode"
+                  "FieldNode",
+                  "NoteNode"
                ]},
                "children": {
                   "type": "array",
                   "uniqueItems": true,
                   "items": {"type": "integer"}
                },
-               "name": {"type": "string"}
+               "name": {"type": "string"},
+               "value": {"type": "string"}
             },
             "allOf": [
+               {
+                  "if": {"properties": {"type": {"const": "ObjectNode"}}},
+                  "then": {"required": ["name"]}
+               },
                {
                   "if": {"properties": {"type": {"const": "PointNode"}}},
                   "then": {"required": []}
                },
                {
-                  "if": {"properties": {"type": {"const": "UseCaseNode"}}},
-                  "then": {"required": ["name"]}
+                  "if": {"properties": {"type": {"const": "FieldNode"}}},
+                  "then": {"required": [
+                     "name",
+                     "value"
+                  ]}
                },
                {
                   "if": {"properties": {"type": {"const": "NoteNode"}}},
-                  "then": {"required": ["name"]}
-               },
-               {
-                  "if": {"properties": {"type": {"const": "ActorNode"}}},
                   "then": {"required": ["name"]}
                }
             ],
@@ -70,33 +74,24 @@
                "start": {"type": "integer"},
                "end": {"type": "integer"},
                "type": {"enum": [
-                  "UseCaseGeneralizationEdge",
-                  "UseCaseAssociationEdge",
-                  "UseCaseDependencyEdge",
-                  "NoteEdge"
+                  "ObjectReferenceEdge",
+                  "NoteEdge",
+                  "ObjectCollaborationEdge"
                ]},
-               "Dependency Type": {"enum": [
-                  "None",
-                  "Include",
-                  "Extend"
-               ]}
+               "middleLabel": {"type": "string"}
             },
             "allOf": [
                {
-                  "if": {"properties": {"type": {"const": "UseCaseGeneralizationEdge"}}},
+                  "if": {"properties": {"type": {"const": "ObjectReferenceEdge"}}},
                   "then": {"required": []}
-               },
-               {
-                  "if": {"properties": {"type": {"const": "UseCaseAssociationEdge"}}},
-                  "then": {"required": []}
-               },
-               {
-                  "if": {"properties": {"type": {"const": "UseCaseDependencyEdge"}}},
-                  "then": {"required": ["Dependency Type"]}
                },
                {
                   "if": {"properties": {"type": {"const": "NoteEdge"}}},
                   "then": {"required": []}
+               },
+               {
+                  "if": {"properties": {"type": {"const": "ObjectCollaborationEdge"}}},
+                  "then": {"required": ["middleLabel"]}
                }
             ],
             "required": [

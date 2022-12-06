@@ -1,8 +1,8 @@
 {
    "$schema": "https://json-schema.org/draft/2019-09/schema",
-   "$id": "docs\\jsonschema_SequenceDiagram.json",
-   "title": "SequenceDiagram",
-   "description": "SequenceDiagram",
+   "$id": "docs\\jsonschema\\jsonschema_UseCaseDiagram.json",
+   "title": "UseCaseDiagram",
+   "description": "UseCaseDiagram",
    "type": "object",
    "required": [
       "diagram",
@@ -11,7 +11,7 @@
       "version"
    ],
    "properties": {
-      "diagram": {"const": "SequenceDiagram"},
+      "diagram": {"const": "UseCaseDiagram"},
       "nodes": {
          "type": "array",
          "description": "description",
@@ -22,35 +22,34 @@
                "y": {"type": "integer"},
                "id": {"type": "integer"},
                "type": {"enum": [
-                  "ImplicitParameterNode",
                   "PointNode",
+                  "UseCaseNode",
                   "NoteNode",
-                  "CallNode"
+                  "ActorNode"
                ]},
                "children": {
                   "type": "array",
                   "uniqueItems": true,
                   "items": {"type": "integer"}
                },
-               "name": {"type": "string"},
-               "openBottom": {"type": "boolean"}
+               "name": {"type": "string"}
             },
             "allOf": [
                {
-                  "if": {"properties": {"type": {"const": "ImplicitParameterNode"}}},
-                  "then": {"required": ["name"]}
-               },
-               {
                   "if": {"properties": {"type": {"const": "PointNode"}}},
                   "then": {"required": []}
+               },
+               {
+                  "if": {"properties": {"type": {"const": "UseCaseNode"}}},
+                  "then": {"required": ["name"]}
                },
                {
                   "if": {"properties": {"type": {"const": "NoteNode"}}},
                   "then": {"required": ["name"]}
                },
                {
-                  "if": {"properties": {"type": {"const": "CallNode"}}},
-                  "then": {"required": ["openBottom"]}
+                  "if": {"properties": {"type": {"const": "ActorNode"}}},
+                  "then": {"required": ["name"]}
                }
             ],
             "required": [
@@ -71,32 +70,29 @@
                "start": {"type": "integer"},
                "end": {"type": "integer"},
                "type": {"enum": [
-                  "ReturnEdge",
-                  "ConstructorEdge",
-                  "CallEdge",
+                  "UseCaseGeneralizationEdge",
+                  "UseCaseAssociationEdge",
+                  "UseCaseDependencyEdge",
                   "NoteEdge"
                ]},
-               "middleLabel": {"type": "string"},
-               "signal": {"type": "boolean"}
+               "Dependency Type": {"enum": [
+                  "None",
+                  "Include",
+                  "Extend"
+               ]}
             },
             "allOf": [
                {
-                  "if": {"properties": {"type": {"const": "ReturnEdge"}}},
-                  "then": {"required": ["middleLabel"]}
+                  "if": {"properties": {"type": {"const": "UseCaseGeneralizationEdge"}}},
+                  "then": {"required": []}
                },
                {
-                  "if": {"properties": {"type": {"const": "ConstructorEdge"}}},
-                  "then": {"required": [
-                     "middleLabel",
-                     "signal"
-                  ]}
+                  "if": {"properties": {"type": {"const": "UseCaseAssociationEdge"}}},
+                  "then": {"required": []}
                },
                {
-                  "if": {"properties": {"type": {"const": "CallEdge"}}},
-                  "then": {"required": [
-                     "middleLabel",
-                     "signal"
-                  ]}
+                  "if": {"properties": {"type": {"const": "UseCaseDependencyEdge"}}},
+                  "then": {"required": ["Dependency Type"]}
                },
                {
                   "if": {"properties": {"type": {"const": "NoteEdge"}}},

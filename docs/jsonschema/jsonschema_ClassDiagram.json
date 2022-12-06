@@ -1,6 +1,6 @@
 {
    "$schema": "https://json-schema.org/draft/2019-09/schema",
-   "$id": "docs\\jsonschema_ClassDiagram.json",
+   "$id": "docs\\jsonschema\\jsonschema_ClassDiagram.json",
    "title": "ClassDiagram",
    "description": "ClassDiagram",
    "type": "object",

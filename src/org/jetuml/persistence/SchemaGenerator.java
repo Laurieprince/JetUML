@@ -44,7 +44,7 @@ public final class SchemaGenerator
 	{
 		for( DiagramType diagramType : DiagramType.values() )
 		{
-			Path OUTPUT_FILE = Paths.get("docs", String.format("jsonschema_%s.json", diagramType.getName()));
+			Path OUTPUT_FILE = Paths.get("docs/jsonschema", String.format("jsonschema_%s.json", diagramType.getName()));
 			File diagramFile = OUTPUT_FILE.toFile();
 			try( PrintWriter out = new PrintWriter(
 					new OutputStreamWriter(new FileOutputStream(diagramFile), StandardCharsets.UTF_8)))
