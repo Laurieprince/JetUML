@@ -2,7 +2,7 @@ package org.jetuml.persistence;
 
 public enum NodeBaseProperties {
 	
-		X("x", "number"), Y("y", "number"), ID("id", "number"), TYPE("type", "string");
+		X("x", "integer"), Y("y", "integer"), ID("id", "integer"), TYPE("type", "string");
 		
 		private final String aLabel;
 		private final String aType;

@@ -2,7 +2,7 @@ package org.jetuml.persistence;
 
 public enum EdgeBaseProperties {
 	
-	START_NODE("start", "number"), END_NODE("end", "number"), EDGE_TYPE("type", "string");
+	START_NODE("start", "integer"), END_NODE("end", "integer"), EDGE_TYPE("type", "string");
 	
 	private final String aLabel;
 	private final String aType;

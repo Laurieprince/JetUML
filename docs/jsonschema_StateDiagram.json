@@ -1,0 +1,103 @@
+{
+   "$schema": "https://json-schema.org/draft/2019-09/schema",
+   "$id": "docs\\jsonschema_StateDiagram.json",
+   "title": "StateDiagram",
+   "description": "StateDiagram",
+   "type": "object",
+   "required": [
+      "diagram",
+      "nodes",
+      "edges",
+      "version"
+   ],
+   "properties": {
+      "diagram": {"const": "StateDiagram"},
+      "nodes": {
+         "type": "array",
+         "description": "description",
+         "items": {
+            "type": "object",
+            "properties": {
+               "x": {"type": "integer"},
+               "y": {"type": "integer"},
+               "id": {"type": "integer"},
+               "type": {"enum": [
+                  "PointNode",
+                  "StateNode",
+                  "InitialStateNode",
+                  "NoteNode",
+                  "FinalStateNode"
+               ]},
+               "children": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {"type": "integer"}
+               },
+               "name": {"type": "string"}
+            },
+            "allOf": [
+               {
+                  "if": {"properties": {"type": {"const": "PointNode"}}},
+                  "then": {"required": []}
+               },
+               {
+                  "if": {"properties": {"type": {"const": "StateNode"}}},
+                  "then": {"required": ["name"]}
+               },
+               {
+                  "if": {"properties": {"type": {"const": "InitialStateNode"}}},
+                  "then": {"required": []}
+               },
+               {
+                  "if": {"properties": {"type": {"const": "NoteNode"}}},
+                  "then": {"required": ["name"]}
+               },
+               {
+                  "if": {"properties": {"type": {"const": "FinalStateNode"}}},
+                  "then": {"required": []}
+               }
+            ],
+            "required": [
+               "x",
+               "y",
+               "id",
+               "type"
+            ],
+            "unevaluatedProperties": false
+         }
+      },
+      "edges": {
+         "type": "array",
+         "description": "description",
+         "items": {
+            "type": "object",
+            "properties": {
+               "start": {"type": "integer"},
+               "end": {"type": "integer"},
+               "type": {"enum": [
+                  "StateTransitionEdge",
+                  "NoteEdge"
+               ]},
+               "middleLabel": {"type": "string"}
+            },
+            "allOf": [
+               {
+                  "if": {"properties": {"type": {"const": "StateTransitionEdge"}}},
+                  "then": {"required": ["middleLabel"]}
+               },
+               {
+                  "if": {"properties": {"type": {"const": "NoteEdge"}}},
+                  "then": {"required": []}
+               }
+            ],
+            "required": [
+               "start",
+               "end",
+               "type"
+            ],
+            "unevaluatedProperties": false
+         }
+      },
+      "version": {"type": "string"}
+   }
+}

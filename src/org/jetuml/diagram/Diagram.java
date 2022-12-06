@@ -236,7 +236,7 @@ public final class Diagram implements DiagramData
 	 * 
 	 * @return A non-null list of node prototypes
 	 */
-	public List<DiagramElement> getPrototypes()
+	public List<DiagramElement> getToolPrototypes()
 	{
 		return aType.getToolPrototypes();
 	}
