@@ -1,7 +1,9 @@
 package org.jetuml.persistence;
 
 import static org.jetuml.application.ApplicationResources.RESOURCES;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -21,7 +23,8 @@ public class SchemaValidator
 	private ValidationContext aValidationContext;
 	private DiagramType aDiagramType;
 	private static Set<Integer> aNodeIds;
-
+	private Map<String, DiagramElement> aElementsMap = new HashMap<>();
+	
 	public SchemaValidator(ValidationContext pvalidationContext)
 	{
 		assert pvalidationContext != null && pvalidationContext.JSONObject() != null;
@@ -57,6 +60,7 @@ public class SchemaValidator
 		try
 		{
 			aDiagramType = DiagramType.fromName(diagramName);
+			aDiagramType.getPrototypes().stream().forEach(x -> aElementsMap.put(x.getClass().getSimpleName(),x));
 		}
 		catch(IllegalArgumentException e)
 		{
@@ -87,8 +91,7 @@ public class SchemaValidator
 			int nodeId = object.getInt("id");
 			if (!aNodeIds.contains(nodeId)) aNodeIds.add(nodeId);
 			else aValidationContext.addError(String.format(RESOURCES.getString("error.validator.duplicate_id"), nodeId));
-
-			validateDiagramElementPrototypes(object, Node.class);
+			validateDiagramElement(object, Node.class);
 		}
 	}
 
@@ -99,8 +102,10 @@ public class SchemaValidator
 			return true;
 		}
 		
-		for(NodeBaseProperties nodeBaseProperty : NodeBaseProperties.values()) {
-			if(!pObject.has(nodeBaseProperty.getLabel())) {
+		for(NodeBaseProperties nodeBaseProperty : NodeBaseProperties.values())
+		{
+			if(!pObject.has(nodeBaseProperty.getLabel()))
+			{
 				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), nodeBaseProperty.getLabel()));
 			}
 		}
@@ -114,17 +119,21 @@ public class SchemaValidator
 		for (int i = 0; i < nodes.length(); i++)
 		{
 			JSONObject object = nodes.getJSONObject(i);
+			var elementType = object.get("type");
+			DiagramElement diagramElement = aElementsMap.get(elementType);
 			if (object.has("children"))
 			{
-				// TODO: Validate a node can be a child
-				// TODO: Validate a node can be a Parent 
-				JSONArray children = object.getJSONArray("children");
-				for (int j = 0; j < children.length(); j++)
+				if(Node.class.isAssignableFrom(diagramElement.getClass()))
 				{
-					if (!aNodeIds.contains(children.getInt(j)))
+					JSONArray children = object.getJSONArray("children");
+					for (int j = 0; j < children.length(); j++)
 					{
-						aValidationContext.addError(String.format(RESOURCES.getString("error.validator.node_id_missing"), "child", children.getInt(j)));
+						nodeIdExists(children.getInt(j), "children");
 					}
+				}
+				else
+				{
+					aValidationContext.addError(String.format(RESOURCES.getString("error.validator.element_does_not_allow_children"), elementType));
 				}
 			}
 		}
@@ -146,8 +155,11 @@ public class SchemaValidator
 
 			if (!validateEdgeBaseProperties(object)) continue;
 			
-			validateEdgeEndPoints(object);
-			validateDiagramElementPrototypes(object, Edge.class);
+			// Validate edge end points
+			nodeIdExists(object.getInt("start"), "start");
+			nodeIdExists(object.getInt("end"), "end");
+			
+			validateDiagramElement(object, Edge.class);
 		}
 	}
 
@@ -158,36 +170,29 @@ public class SchemaValidator
 			return true;
 		}
 
-		for(EdgeBaseProperties edgeBaseProperty : EdgeBaseProperties.values()) {
-			if(!pObject.has(edgeBaseProperty.getLabel())) {
+		for(EdgeBaseProperties edgeBaseProperty : EdgeBaseProperties.values())
+		{
+			if(!pObject.has(edgeBaseProperty.getLabel()))
+			{
 				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), edgeBaseProperty.getLabel()));
 			}
 		}
 		return false;
 	}
 
-	private void validateEdgeEndPoints(JSONObject pObject)
+	private void nodeIdExists(int pNodeId, String pField)
 	{
-		int startNodeId = pObject.getInt("start");
-		if (!aNodeIds.contains(startNodeId))
+		if (!aNodeIds.contains(pNodeId))
 		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.node_id_missing"), "start", startNodeId));
-		}
-
-		int endNodeId = pObject.getInt("end");
-		if (!aNodeIds.contains(endNodeId))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.node_id_missing"), "end", endNodeId));
+			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.node_id_missing"), pField , pNodeId));
 		}
 	}
 	
-	private void validateDiagramElementPrototypes(JSONObject pObject, Class<? extends DiagramElement> elementClass)
+	private void validateDiagramElement(JSONObject pObject, Class<? extends DiagramElement> elementClass)
 	{
 		String elementType = pObject.getString("type");
 		
-		Optional<DiagramElement> diagramElement =  aDiagramType.getPrototypes().stream()
-				.filter(x -> x.getClass().getSimpleName().equals(elementType))
-				.findFirst();
+		Optional<DiagramElement> diagramElement = Optional.of(aElementsMap.get(elementType));
 		
 		if (!diagramElement.isPresent())
 		{
