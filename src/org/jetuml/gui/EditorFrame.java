@@ -305,7 +305,7 @@ public class EditorFrame extends BorderPane
 			}
 			else 
 			{
-				Alert alert = new Alert(AlertType.ERROR,validationContext.getErrors().toString(), ButtonType.OK);
+				Alert alert = new Alert(AlertType.ERROR,validationContext.errors().toString(), ButtonType.OK);
 				alert.setTitle("JSON parsing error");
 				alert.initOwner(aMainStage);
 				alert.showAndWait();

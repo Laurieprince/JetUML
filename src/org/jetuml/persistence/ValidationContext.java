@@ -76,7 +76,7 @@ public class ValidationContext
 		aErrors.add(pError);
 	}
 	
-	public List<String> getErrors()
+	public List<String> errors()
 	{
 		return aErrors;
 	}

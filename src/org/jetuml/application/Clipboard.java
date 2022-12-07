@@ -299,7 +299,7 @@ public final class Clipboard
 	
 	private static boolean validElementFor( DiagramElement pElement, Diagram pDiagram )
 	{
-		return pDiagram.getAllPrototypes().stream()
+		return pDiagram.getPrototypes().stream()
 				.map(Object::getClass)
 				.anyMatch(Predicate.isEqual(pElement.getClass()));
 	}
