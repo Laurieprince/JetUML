@@ -25,7 +25,14 @@ public class JsonValidator
 		aFile = pvalidationContext.file();
 	}
 	
-	public void validate() throws FileNotFoundException, IOException
+	/**
+	 * Reads a JSONObject from a file.
+	 * 
+	 * @param pFile The file to read the JSONObject from.
+	 * @throws IOException if the file cannot be read.
+	 * @throws JSONException if the JSONObject cannot be constructed.
+	 */
+	public void validate()
 	{
 		try( BufferedReader in = new BufferedReader(
 				new InputStreamReader(new FileInputStream(aFile), StandardCharsets.UTF_8)))
@@ -33,9 +40,9 @@ public class JsonValidator
 			JSONObject jsonObject = new JSONObject(in.lines().collect(Collectors.joining("\n")));
 			aValidationContext.setJSONObject(jsonObject);
 		}
-		catch( JSONException e )
+		catch( IOException | JSONException e )
 		{
-			aValidationContext.addError(RESOURCES.getString("error.validator.decode_file"));
+			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.decode_file"), e.getMessage()));
 		}
 	}
 }

@@ -60,12 +60,11 @@ public final class PersistenceService
 	 * Reads a diagram from a file.
 	 * 
 	 * @param pFile The file to read the diagram from.
-	 * @return The diagram that is read in
+	 * @return The validation context decorating the error list and the diagram object
 	 * @throws IOException if the diagram cannot be read.
-	 * @throws DeserializationException if there is a problem decoding the file.
 	 * @pre pFile != null
 	 */
-	public static ValidationContext read(File pFile) throws IOException, DeserializationException
+	public static ValidationContext read(File pFile)
 	{
 		assert pFile != null;
 		ValidationContext validationContext = new ValidationContext(pFile);
@@ -80,9 +79,6 @@ public final class PersistenceService
 		
 		var diagram =  JsonDecoder.decode(validationContext.JSONObject());
 		validationContext.setDiagram(diagram);
-		
-		SemanticValidator semanticValidator = new SemanticValidator(validationContext);
-		semanticValidator.validate();
 		
 		return validationContext;
 	}

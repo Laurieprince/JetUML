@@ -292,28 +292,20 @@ public class EditorFrame extends BorderPane
 			return;
 		}
 		
-		try
+		
+		ValidationContext validationContext = PersistenceService.read(pFile); 
+		
+		if(validationContext.isValid())
 		{
-			ValidationContext validationContext = PersistenceService.read(pFile); 
-			
-			if(validationContext.isValid())
-			{
-				DiagramTab frame = new DiagramTab(validationContext.diagram());
-				frame.setFile(pFile.getAbsoluteFile());
-				addRecentFile(pFile.getPath());
-				insertGraphFrameIntoTabbedPane(frame);
-			}
-			else 
-			{
-				Alert alert = new Alert(AlertType.ERROR,validationContext.errors().toString(), ButtonType.OK);
-				alert.setTitle("JSON parsing error");
-				alert.initOwner(aMainStage);
-				alert.showAndWait();
-			}
+			DiagramTab frame = new DiagramTab(validationContext.diagram());
+			frame.setFile(pFile.getAbsoluteFile());
+			addRecentFile(pFile.getPath());
+			insertGraphFrameIntoTabbedPane(frame);
 		}
-		catch(IOException | DeserializationException exception) 
+		else 
 		{
-			Alert alert = new Alert(AlertType.ERROR, RESOURCES.getString("error.open_file"), ButtonType.OK);
+			Alert alert = new Alert(AlertType.ERROR,validationContext.errors().toString(), ButtonType.OK);
+			alert.setTitle("JSON parsing error");
 			alert.initOwner(aMainStage);
 			alert.showAndWait();
 		}
