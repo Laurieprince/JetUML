@@ -80,6 +80,9 @@ public final class PersistenceService
 		var diagram =  JsonDecoder.decode(validationContext.JSONObject());
 		validationContext.setDiagram(diagram);
 		
+		SemanticValidator semanticValidator = new SemanticValidator(validationContext);
+		semanticValidator.validate();
+		
 		return validationContext;
 	}
 }
