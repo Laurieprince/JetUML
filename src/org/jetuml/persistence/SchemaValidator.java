@@ -13,6 +13,7 @@ import org.jetuml.diagram.Edge;
 import org.jetuml.diagram.Node;
 import org.jetuml.diagram.Properties;
 import org.jetuml.diagram.Property;
+import org.jetuml.persistence.SchemaProperties.SchemaProperty;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,8 +37,8 @@ public class SchemaValidator
 	{
 		try 
 		{
-			if (!validateDiagram()) return;
-
+			if (!validateDiagramRequiredProperties()) return;
+			if (!validateDiagramType()) return;
 			validateNodes();
 			validateNodeChildren();
 			validateEdges();
@@ -47,37 +48,39 @@ public class SchemaValidator
 			aValidationContext.addError(RESOURCES.getString("error.validator.instance_serialize_object"));
 		}
 	}
-
-	private boolean validateDiagram()
+	
+	private boolean validateDiagramRequiredProperties()
 	{
-		if (!aJsonObject.has("diagram"))
+		for(SchemaProperty property : SchemaProperties.diagramProperties())
 		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "diagram"));
-			return false;
+			if(!aJsonObject.has(property.name()))
+			{
+				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), property));
+				return false;
+			}
 		}
+		return true;
+	}
 
+	private boolean validateDiagramType()
+	{
 		String diagramName = aJsonObject.getString("diagram");
 		try
 		{
 			aDiagramType = DiagramType.fromName(diagramName);
 			aDiagramType.getPrototypes().stream().forEach(x -> aElementsMap.put(x.getClass().getSimpleName(),x));
+			return true;
 		}
 		catch(IllegalArgumentException e)
 		{
 			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_diagram_name"), diagramName));
 			return false;
 		}
-		return true;
 	}
 
 	private void validateNodes()
 	{
 		aNodeIds = new HashSet<Integer>();
-		if (!aJsonObject.has("nodes"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "nodes"));
-			return;
-		}
 
 		JSONArray nodes = aJsonObject.getJSONArray("nodes");
 
@@ -102,11 +105,11 @@ public class SchemaValidator
 			return true;
 		}
 		
-		for(NodeBaseProperties nodeBaseProperty : NodeBaseProperties.values())
+		for(SchemaProperty nodeProperty : SchemaProperties.nodeBaseProperties())
 		{
-			if(!pObject.has(nodeBaseProperty.getLabel()))
+			if(!pObject.has(nodeProperty.name()))
 			{
-				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), nodeBaseProperty.getLabel()));
+				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), nodeProperty.name()));
 			}
 		}
 		
@@ -125,10 +128,18 @@ public class SchemaValidator
 			{
 				if(Node.class.isAssignableFrom(diagramElement.getClass()))
 				{
-					JSONArray children = object.getJSONArray("children");
-					for (int j = 0; j < children.length(); j++)
+					Node parentNode = (Node)diagramElement;
+					if(parentNode.allowsChildren()) {
+						JSONArray children = object.getJSONArray("children");
+						for (int j = 0; j < children.length(); j++)
+						{
+							// TODO: validate node can be a child
+							nodeIdExists(children.getInt(j), "children");
+						}					
+					}
+					else
 					{
-						nodeIdExists(children.getInt(j), "children");
+						aValidationContext.addError(String.format(RESOURCES.getString("error.validator.element_does_not_allow_children"), elementType));
 					}
 				}
 				else
@@ -141,12 +152,6 @@ public class SchemaValidator
 
 	private void validateEdges()
 	{
-		if (!aJsonObject.has("edges"))
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), "edges"));
-			return;
-		}
-
 		JSONArray edges = aJsonObject.getJSONArray("edges");
 
 		for (int i = 0; i < edges.length(); i++)
@@ -170,11 +175,11 @@ public class SchemaValidator
 			return true;
 		}
 
-		for(EdgeBaseProperties edgeBaseProperty : EdgeBaseProperties.values())
+		for(SchemaProperty edgeProperty : SchemaProperties.edgeBaseProperties())
 		{
-			if(!pObject.has(edgeBaseProperty.getLabel()))
+			if(!pObject.has(edgeProperty.name()))
 			{
-				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), edgeBaseProperty.getLabel()));
+				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), edgeProperty.name()));
 			}
 		}
 		return false;
@@ -192,7 +197,7 @@ public class SchemaValidator
 	{
 		String elementType = pObject.getString("type");
 		
-		Optional<DiagramElement> diagramElement = Optional.of(aElementsMap.get(elementType));
+		Optional<DiagramElement> diagramElement = Optional.ofNullable(aElementsMap.get(elementType));
 		
 		if (!diagramElement.isPresent())
 		{
