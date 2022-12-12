@@ -143,6 +143,28 @@ public abstract class DiagramBuilder
 	}
 	
 	/**
+	 * Returns whether adding pEdge between pStartNode and pEndNode
+	 * is a valid operation on the diagram. 
+	 * 
+	 * @param pEdge The requested edge
+	 * @param pStart A requested start node
+	 * @param pEnd A requested end node
+	 * @return True if it's possible to add an edge of this type given the requested nodes.
+	 * @pre pEdge != null && pStartNode = null && pEndNode != null
+	 */
+	public final boolean canAdd(Edge pEdge, Node pStartNode, Node pEndNode)
+	{
+		assert pEdge != null && pStartNode != null && pEndNode != null;
+		
+		if(pStartNode instanceof NoteNode && pEdge instanceof NoteEdge)
+		{
+			return true; // Special case: we can always create a point node.
+		}
+
+		return getEdgeConstraints().satisfied(pEdge, pStartNode, pEndNode, pStartNode.position(), pEndNode.position(), aDiagramRenderer);	
+	}
+	
+	/**
 	 * Returns whether adding pNode at pRequestedPosition is a valid
 	 * operation on the diagram. True by default. 
 	 * Override to provide cases where this should be false.
