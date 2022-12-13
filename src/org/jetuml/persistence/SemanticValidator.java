@@ -30,52 +30,50 @@ public class SemanticValidator
 
 	public void validate()
 	{
-		if(!validateChildrenNodes()) return;
-		if(!aValidationContext.isValid()) return;
 		if(!validateNodes()) return;
 		if(!validateEdges()) return;
-		
-		try
-		{
-			aDiagramRenderer.getBounds();
-		}
-		catch(Exception e)
-		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.diagram_rendering"), e.getMessage()));
-		}
-	}
-
-	private boolean validateChildrenNodes()
-	{
-		var result = true;
-		for(Node node: aDiagram.allNodes())
-		{
-			if(node.requiresParent() && !node.hasParent())
-			{
-				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.children_node_requires_parent"), node.toString()));
-			}
-		}
-		return result;
+		if(!validateChildren()) return;
 	}
 	
 	private boolean validateNodes()
 	{
 		var result = true;
-
+		for (Node rootNode : aDiagram.rootNodes())
+		{
+			if (aDiagramBuilder.canAdd(rootNode, rootNode.position()))
+			{
+				aValidatedDiagram.addRootNode(rootNode);
+			}
+			else
+			{
+				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_node_addition"), rootNode.getClass().getSimpleName(), rootNode.position().toString()));
+				result = false;
+			}
+		}
+		return result;
+	}
+	
+	private boolean validateChildren()
+	{
+		try
+		{
+			aDiagramRenderer.getBounds();
 			for (Node rootNode : aDiagram.rootNodes())
 			{
-				if (aDiagramBuilder.canAdd(rootNode, rootNode.position()))
-				{
-					aValidatedDiagram.addRootNode(rootNode);
-				}
-				else
+				for(Node childNode : rootNode.getChildren()) // make recursive for 
+				if (!aDiagramBuilder.canAdd(childNode, childNode.position()))
 				{
 					aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_node_addition"), rootNode.toString(), rootNode.position().toString()));
-					result = false;
+					return false;
 				}
 			}
-
-		return result;
+			return true;
+		}
+		catch(Exception e)
+		{
+			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.diagram_rendering"), e.getMessage()));
+			return false;
+		}
 	}
 
 	private boolean validateEdges()

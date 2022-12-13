@@ -133,12 +133,18 @@ public class SequenceDiagramBuilder extends DiagramBuilder
 	@Override
 	public boolean canAdd(Node pNode, Point pRequestedPosition)
 	{
-		boolean result = true;
-		if(pNode instanceof CallNode && insideTargetArea(pRequestedPosition) == null)
+		if(pNode instanceof CallNode)
 		{
-			result = false;
+			if(!pNode.hasParent())
+			{
+				return false;
+			}
+			if(insideTargetArea(pRequestedPosition) == null)
+			{
+				return false;
+			}
 		}
-		return result;
+		return true;
 	}
 	
 	@Override
