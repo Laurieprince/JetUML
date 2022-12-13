@@ -17,11 +17,11 @@ public class SemanticValidator
 	private DiagramBuilder aDiagramBuilder;
 	private ValidationContext aValidationContext;
 
-	public SemanticValidator(ValidationContext pvalidationContext)
+	public SemanticValidator(ValidationContext pValidationContext)
 	{
-		assert pvalidationContext != null && pvalidationContext.diagram() != null;
+		assert pValidationContext != null && pValidationContext.diagram() != null;
 		
-		aValidationContext = pvalidationContext;
+		aValidationContext = pValidationContext;
 		aDiagram = aValidationContext.diagram();
 		aValidatedDiagram = new Diagram(aDiagram.getType());
 		aDiagramBuilder = DiagramType.newBuilderInstanceFor(aValidatedDiagram);
@@ -35,7 +35,6 @@ public class SemanticValidator
 		if(!validateNodes()) return;
 		if(!validateEdges()) return;
 		
-		// Check if there is no exception 
 		try
 		{
 			aDiagramRenderer.getBounds();
@@ -62,18 +61,20 @@ public class SemanticValidator
 	private boolean validateNodes()
 	{
 		var result = true;
-		for (Node rootNode : aDiagram.rootNodes())
-		{
-			if (aDiagramBuilder.canAdd(rootNode, rootNode.position()))
+
+			for (Node rootNode : aDiagram.rootNodes())
 			{
-				aValidatedDiagram.addRootNode(rootNode);
+				if (aDiagramBuilder.canAdd(rootNode, rootNode.position()))
+				{
+					aValidatedDiagram.addRootNode(rootNode);
+				}
+				else
+				{
+					aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_node_addition"), rootNode.toString(), rootNode.position().toString()));
+					result = false;
+				}
 			}
-			else
-			{
-				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_node_addition"), rootNode.toString(), rootNode.position().toString()));
-				result = false;
-			}
-		}
+
 		return result;
 	}
 
