@@ -60,11 +60,13 @@ public class SemanticValidator
 			aDiagramRenderer.getBounds();
 			for (Node rootNode : aDiagram.rootNodes())
 			{
-				for(Node childNode : rootNode.getChildren()) // make recursive for 
-				if (!aDiagramBuilder.canAdd(childNode, childNode.position()))
+				for(Node childNode : rootNode.getChildren())
 				{
-					aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_node_addition"), rootNode.toString(), rootNode.position().toString()));
-					return false;
+					if (!aDiagramBuilder.canAdd(childNode, childNode.position()))
+					{
+						aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_node_addition"), rootNode.toString(), rootNode.position().toString()));
+						return false;
+					}
 				}
 			}
 			return true;

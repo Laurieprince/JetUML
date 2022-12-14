@@ -39,8 +39,8 @@ public class SchemaValidator
 		{
 			if (!validateDiagramRequiredProperties()) return;
 			if (!validateDiagramType()) return;
-			validateNodes();
-			validateNodeChildren();
+			validateRootNodes();
+			validateChildrenNodes();
 			validateEdges();
 		}
 		catch (JSONException | IllegalArgumentException exception)
@@ -78,7 +78,7 @@ public class SchemaValidator
 		}
 	}
 
-	private void validateNodes()
+	private void validateRootNodes()
 	{
 		aNodeIds = new HashSet<Integer>();
 
@@ -116,7 +116,11 @@ public class SchemaValidator
 		return false;
 	}
 
-	private void validateNodeChildren()
+	// TODO: validate a node can be a child
+	// TODO: validate a node only has one parent
+	// validates the children nodes are present
+	// validates a node allows children
+	private void validateChildrenNodes()
 	{
 		JSONArray nodes = aJsonObject.getJSONArray("nodes");
 		for (int i = 0; i < nodes.length(); i++)
@@ -135,7 +139,7 @@ public class SchemaValidator
 						{
 							// TODO: validate node can be a child
 							nodeIdExists(children.getInt(j), "children");
-						}					
+						}
 					}
 					else
 					{

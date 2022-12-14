@@ -67,22 +67,6 @@ public final class PersistenceService
 	public static ValidationContext read(File pFile)
 	{
 		assert pFile != null;
-		ValidationContext validationContext = new ValidationContext(pFile);
-		
-		JsonValidator jsonValidator = new JsonValidator(validationContext);
-		jsonValidator.validate();
-		if(!validationContext.isValid()) return validationContext;
-		
-		SchemaValidator schemaValidator = new SchemaValidator(validationContext);
-		schemaValidator.validate();
-		if(!validationContext.isValid()) return validationContext;
-		
-		var diagram =  JsonDecoder.decode(validationContext.JSONObject());
-		validationContext.setDiagram(diagram);
-		
-		SemanticValidator semanticValidator = new SemanticValidator(validationContext);
-		semanticValidator.validate();
-		
-		return validationContext;
+		return DiagramValidator.validate(pFile);
 	}
 }
