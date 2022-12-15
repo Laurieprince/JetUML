@@ -2,7 +2,6 @@
    "$schema": "https://json-schema.org/draft/2019-09/schema",
    "$id": "docs\\jsonschema\\jsonschema_ClassDiagram.json",
    "title": "ClassDiagram",
-   "description": "ClassDiagram",
    "type": "object",
    "required": [
       "diagram",
@@ -14,9 +13,15 @@
       "diagram": {"const": "ClassDiagram"},
       "nodes": {
          "type": "array",
-         "description": "description",
+         "uniqueItems": true,
          "items": {
             "type": "object",
+            "required": [
+               "x",
+               "y",
+               "id",
+               "type"
+            ],
             "properties": {
                "x": {"type": "integer"},
                "y": {"type": "integer"},
@@ -75,20 +80,19 @@
                   "then": {"required": ["name"]}
                }
             ],
-            "required": [
-               "x",
-               "y",
-               "id",
-               "type"
-            ],
             "unevaluatedProperties": false
          }
       },
       "edges": {
          "type": "array",
-         "description": "description",
+         "uniqueItems": true,
          "items": {
             "type": "object",
+            "required": [
+               "start",
+               "end",
+               "type"
+            ],
             "properties": {
                "start": {"type": "integer"},
                "end": {"type": "integer"},
@@ -151,14 +155,10 @@
                   "then": {"required": []}
                }
             ],
-            "required": [
-               "start",
-               "end",
-               "type"
-            ],
             "unevaluatedProperties": false
          }
       },
       "version": {"type": "string"}
-   }
+   },
+   "unevaluatedProperties": false
 }
