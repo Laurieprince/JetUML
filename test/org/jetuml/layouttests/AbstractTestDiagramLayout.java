@@ -80,7 +80,7 @@ public abstract class AbstractTestDiagramLayout
 	
 	AbstractTestDiagramLayout(Path pDiagramPath) throws IOException
 	{
-		aDiagram = PersistenceService.read(pDiagramPath.toFile()).diagram();
+		aDiagram = (Diagram)PersistenceService.read(pDiagramPath.toFile()).object();
 		aRenderer = DiagramType.newRendererInstanceFor(aDiagram);
 	}
 	

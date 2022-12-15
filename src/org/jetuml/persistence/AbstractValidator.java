@@ -1,7 +1,7 @@
 /*******************************************************************************
  * JetUML - A desktop application for fast UML diagramming.
  *
- * Copyright (C) 2020 by McGill University.
+ * Copyright (C) 2020, 2021 by McGill University.
  *     
  * See: https://github.com/prmr/JetUML
  *
@@ -20,64 +20,43 @@
  *******************************************************************************/
 package org.jetuml.persistence;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.jetuml.diagram.Diagram;
-import org.json.JSONObject;
-
-public class ValidationContext
+public abstract class AbstractValidator<T> implements Validator
 {
-	private Optional<File> aFile;
-	private Optional<JSONObject> aJSONObject;
-	private Optional<Diagram> aDiagram;
-	private List<String> aErrors = new ArrayList<String>();
-
-	ValidationContext(File pFile)
-	{
-		assert pFile != null;
-		aFile = Optional.of(pFile);
-	}
-
-	public File file()
-	{
-		return aFile.get();
-	}
+	private Optional<T> aObject;
+	private Optional<List<String>> aErrors = Optional.of(new ArrayList<String>());
 	
-	public JSONObject JSONObject()
-	{
-		return aJSONObject.get();
-	}
-	
-	public void setJSONObject(JSONObject pJSONObject)
-	{
-		aJSONObject = Optional.of(pJSONObject);
-	}
-	
-	public Diagram diagram()
-	{
-		return aDiagram.get();
-	}
-	
-	public void setDiagram(Diagram pDiagram)
-	{
-		aDiagram = Optional.of(pDiagram);
-	}
-	
+	@Override
 	public boolean isValid()
 	{
-		return aErrors.isEmpty();
+		return aErrors.get().isEmpty();
+	}
+
+	@Override
+	public List<String> errors()
+	{
+		assert !isValid();
+		return aErrors.get();
+	}
+
+	@Override
+	public T object()
+	{
+		assert isValid() && aObject.isPresent();
+		return aObject.get();
+	}
+	
+	public void setObject(T pObject)
+	{
+		assert pObject != null;
+		aObject = Optional.of(pObject);
 	}
 	
 	public void addError(String pError)
 	{
-		aErrors.add(pError);
-	}
-	
-	public List<String> errors()
-	{
-		return aErrors;
+		aErrors.get().add(pError);
 	}
 }

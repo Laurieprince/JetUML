@@ -64,7 +64,7 @@ public final class PersistenceService
 	 * @throws IOException if the diagram cannot be read.
 	 * @pre pFile != null
 	 */
-	public static ValidationContext read(File pFile)
+	public static Validator read(File pFile)
 	{
 		assert pFile != null;
 		return DiagramValidator.validate(pFile);

@@ -1,3 +1,23 @@
+/*******************************************************************************
+ * JetUML - A desktop application for fast UML diagramming.
+ *
+ * Copyright (C) 2020, 2021 by McGill University.
+ *     
+ * See: https://github.com/prmr/JetUML
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses.
+ *******************************************************************************/
 package org.jetuml.persistence;
 
 import java.io.File;
@@ -16,36 +36,32 @@ public final class DiagramValidator
 		assert pArgs.length == 1;
 		
 		File diagramFile = Paths.get(pArgs[0]).toFile();
-		var validationContext = validate(diagramFile);
+		Validator validator = validate(diagramFile);
 		
-		if(validationContext.isValid())
+		if(validator.isValid())
 		{
 			System.out.println("Diagram is Valid.");
 		}
 		else
 		{
-			System.out.println(validationContext.errors().toString());
+			System.out.println(validator.errors().toString());
 		}
 	}
 	
-	public static ValidationContext validate(File pFile)
+	public static Validator validate(File pFile)
 	{
-		ValidationContext validationContext = new ValidationContext(pFile);
-		
-		JsonValidator jsonValidator = new JsonValidator(validationContext);
+		JsonValidator jsonValidator = new JsonValidator(pFile);
 		jsonValidator.validate();
-		if(!validationContext.isValid()) return validationContext;
+		if(!jsonValidator.isValid()) return jsonValidator;
 		
-		SchemaValidator schemaValidator = new SchemaValidator(validationContext);
+		SchemaValidator schemaValidator = new SchemaValidator(jsonValidator.object());
 		schemaValidator.validate();
-		if(!validationContext.isValid()) return validationContext;
+		if(!schemaValidator.isValid()) return schemaValidator;
 		
-		var diagram = JsonDecoder.decode(validationContext.JSONObject());
-		validationContext.setDiagram(diagram);
+		var diagram = JsonDecoder.decode(jsonValidator.object());
 		
-		SemanticValidator semanticValidator = new SemanticValidator(validationContext);
+		SemanticValidator semanticValidator = new SemanticValidator(diagram);
 		semanticValidator.validate();
-		
-		return validationContext;
+		return semanticValidator;
 	}
 }

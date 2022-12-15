@@ -1,3 +1,23 @@
+/*******************************************************************************
+ * JetUML - A desktop application for fast UML diagramming.
+ *
+ * Copyright (C) 2020, 2021 by McGill University.
+ *     
+ * See: https://github.com/prmr/JetUML
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses.
+ *******************************************************************************/
 package org.jetuml.persistence;
 
 import static org.jetuml.application.ApplicationResources.RESOURCES;
@@ -20,19 +40,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class SchemaValidator
+/**
+ * Validates the Diagram JSONObject.
+ */
+public class SchemaValidator extends AbstractValidator<JSONObject>
 {
 	private JSONObject aJsonObject;
-	private ValidationContext aValidationContext;
 	private DiagramType aDiagramType;
 	private static Set<Integer> aNodeIds;
 	private Map<String, DiagramElement> aElementsMap = new HashMap<>();
 	
-	public SchemaValidator(ValidationContext pvalidationContext)
+	public SchemaValidator(JSONObject pJsonObject)
 	{
-		assert pvalidationContext != null && pvalidationContext.JSONObject() != null;
-		aValidationContext = pvalidationContext;
-		aJsonObject = pvalidationContext.JSONObject();
+		assert pJsonObject != null;
+		aJsonObject = pJsonObject;
 	}
 
 	public void validate()
@@ -41,50 +62,56 @@ public class SchemaValidator
 		{
 			if (!validateDiagramRequiredProperties()) return;
 			if (!validateDiagramType()) return;
+			aDiagramType.getPrototypes().stream().forEach(x -> aElementsMap.put(x.getClass().getSimpleName(),x));
 			validateNodes();
 			validateChildrenNodes();
 			validateEdges();
 			
-			if(!aValidationContext.isValid())
+			if(!isValid())
 			{
 				Version version = Version.parse(aJsonObject.getString("version"));
 				if(!version.compatibleWith(JetUML.VERSION))
 				{
-					aValidationContext.addError(String.format(RESOURCES.getString("error.validator.version"),  version.toString(), JetUML.VERSION.toString()));
+					addError(String.format(RESOURCES.getString("error.validator.version"),  version.toString(), JetUML.VERSION.toString()));
 				}
 			}
 		}
 		catch (JSONException exception)
 		{
-			aValidationContext.addError(RESOURCES.getString("error.validator.instance_serialize_object"));
+			addError(RESOURCES.getString("error.validator.instance_serialize_object"));
 		}
 	}
 	
+	/**
+	 * @return True if the Diagram required properties are present.
+	 */
 	private boolean validateDiagramRequiredProperties()
 	{
 		for(SchemaProperty property : SchemaProperties.diagramProperties())
 		{
 			if(!aJsonObject.has(property.name()))
 			{
-				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), property));
+				addError(String.format(RESOURCES.getString("error.validator.missing_property"), property));
 				return false;
 			}
 		}
 		return true;
 	}
 
+	/**
+	 * @return True if the type 
+	 */
 	private boolean validateDiagramType()
 	{
 		String diagramName = aJsonObject.getString("diagram");
 		try
 		{
 			aDiagramType = DiagramType.fromName(diagramName);
-			aDiagramType.getPrototypes().stream().forEach(x -> aElementsMap.put(x.getClass().getSimpleName(),x));
 			return true;
 		}
 		catch(IllegalArgumentException exception)
 		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_diagram_name"), diagramName));
+			addError(String.format(RESOURCES.getString("error.validator.invalid_diagram_name"), diagramName));
 			return false;
 		}
 	}
@@ -99,36 +126,40 @@ public class SchemaValidator
 		{
 			JSONObject object = nodes.getJSONObject(i);
 
-			if (!validateNodeBaseProperties(object))
-				continue;
-
+			if (!validateNodeBaseProperties(object)) continue;
+			
+			// Validate the node id is unique
 			int nodeId = object.getInt("id");
-			if (!aNodeIds.contains(nodeId)) aNodeIds.add(nodeId);
-			else aValidationContext.addError(String.format(RESOURCES.getString("error.validator.duplicate_id"), nodeId));
+			if (aNodeIds.contains(nodeId))
+			{
+				addError(String.format(RESOURCES.getString("error.validator.duplicate_id"), nodeId));
+			}
+			else
+			{
+				aNodeIds.add(nodeId);
+			}
+			
 			validateDiagramElement(object, Node.class);
 		}
 	}
 
 	private boolean validateNodeBaseProperties(JSONObject pObject)
 	{
-		if (pObject.has("id") && pObject.has("type") && pObject.has("x") && pObject.has("y"))
-		{
-			return true;
-		}
+		boolean result = true;
 		
 		for(SchemaProperty nodeProperty : SchemaProperties.nodeBaseProperties())
 		{
 			if(!pObject.has(nodeProperty.name()))
 			{
-				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), nodeProperty.name()));
+				addError(String.format(RESOURCES.getString("error.validator.missing_property"), nodeProperty.name()));
+				result = false;
 			}
 		}
 		
-		return false;
+		return result;
 	}
 
-	// TODO: validate a node can be a child
-	// TODO: validate a node only has one parent
+
 	// validates the children nodes are present
 	// validates a node allows children
 	private void validateChildrenNodes()
@@ -143,8 +174,7 @@ public class SchemaValidator
 			{
 				if(Node.class.isAssignableFrom(diagramElement.getClass()))
 				{
-					Node parentNode = (Node)diagramElement;
-					if(parentNode.allowsChildren()) {
+					if(((Node)diagramElement).allowsChildren()) {
 						JSONArray children = object.getJSONArray("children");
 						for (int j = 0; j < children.length(); j++)
 						{
@@ -153,12 +183,12 @@ public class SchemaValidator
 					}
 					else
 					{
-						aValidationContext.addError(String.format(RESOURCES.getString("error.validator.element_does_not_allow_children"), elementType));
+						addError(String.format(RESOURCES.getString("error.validator.element_does_not_allow_children"), elementType));
 					}
 				}
 				else
 				{
-					aValidationContext.addError(String.format(RESOURCES.getString("error.validator.element_does_not_allow_children"), elementType));
+					addError(String.format(RESOURCES.getString("error.validator.element_does_not_allow_children"), elementType));
 				}
 			}
 		}
@@ -184,26 +214,24 @@ public class SchemaValidator
 
 	private boolean validateEdgeBaseProperties(JSONObject pObject)
 	{
-		if (pObject.has("type") && pObject.has("start") && pObject.has("end"))
-		{
-			return true;
-		}
+		boolean result = true;
 
 		for(SchemaProperty edgeProperty : SchemaProperties.edgeBaseProperties())
 		{
 			if(!pObject.has(edgeProperty.name()))
 			{
-				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.missing_property"), edgeProperty.name()));
+				addError(String.format(RESOURCES.getString("error.validator.missing_property"), edgeProperty.name()));
+				result = false;
 			}
 		}
-		return false;
+		return result;
 	}
 
 	private void nodeIdExists(int pNodeId, String pField)
 	{
 		if (!aNodeIds.contains(pNodeId))
 		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.node_id_missing"), pField , pNodeId));
+			addError(String.format(RESOURCES.getString("error.validator.node_id_missing"), pField , pNodeId));
 		}
 	}
 	
@@ -215,13 +243,13 @@ public class SchemaValidator
 		
 		if (!diagramElement.isPresent())
 		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.undefined_property"), elementType, aDiagramType.getName()));
+			addError(String.format(RESOURCES.getString("error.validator.undefined_property"), elementType, aDiagramType.getName()));
 			return;
 		}
 		
 		if(!elementClass.isAssignableFrom(diagramElement.get().getClass()))
 		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_element_type"), elementType, elementClass.getSimpleName()));
+			addError(String.format(RESOURCES.getString("error.validator.invalid_element_type"), elementType, elementClass.getSimpleName()));
 			return;
 		}
 		
@@ -229,10 +257,9 @@ public class SchemaValidator
 
 		for (Property property : properties)
 		{
-			if (!pObject.has(property.name().external())) 
+			if (!pObject.has(property.name().external()))
 			{
-				aValidationContext.addError(String.format(RESOURCES.getString("error.validator.undefined_property"),
-						property.name().external(), elementType));
+				addError(String.format(RESOURCES.getString("error.validator.undefined_property"), property.name().external(), elementType));
 			}
 		}
 	}

@@ -1,3 +1,23 @@
+/*******************************************************************************
+ * JetUML - A desktop application for fast UML diagramming.
+ *
+ * Copyright (C) 2020, 2021 by McGill University.
+ *     
+ * See: https://github.com/prmr/JetUML
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses.
+ *******************************************************************************/
 package org.jetuml.persistence;
 
 import static org.jetuml.application.ApplicationResources.RESOURCES;
@@ -12,16 +32,14 @@ import java.util.stream.Collectors;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class JsonValidator
+public class JsonValidator extends AbstractValidator<JSONObject>
 {
-	private ValidationContext aValidationContext;
 	private File aFile;
 	
-	public JsonValidator(ValidationContext pvalidationContext)
+	public JsonValidator(File pFile)
 	{
-		assert pvalidationContext != null && pvalidationContext.file() != null;
-		aValidationContext = pvalidationContext;
-		aFile = pvalidationContext.file();
+		assert pFile != null;
+		aFile = pFile;
 	}
 	
 	/**
@@ -36,12 +54,11 @@ public class JsonValidator
 		try( BufferedReader in = new BufferedReader(
 				new InputStreamReader(new FileInputStream(aFile), StandardCharsets.UTF_8)))
 		{
-			JSONObject jsonObject = new JSONObject(in.lines().collect(Collectors.joining("\n")));
-			aValidationContext.setJSONObject(jsonObject);
+			setObject(new JSONObject(in.lines().collect(Collectors.joining("\n"))));
 		}
 		catch( IOException | JSONException e )
 		{
-			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.decode_file"), e.getMessage()));
+			addError(String.format(RESOURCES.getString("error.validator.decode_file"), e.getMessage()));
 		}
 	}
 }
