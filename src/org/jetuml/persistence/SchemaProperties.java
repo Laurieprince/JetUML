@@ -2,10 +2,11 @@ package org.jetuml.persistence;
 
 import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 public final class SchemaProperties
-{
-	public static final String JSONSCHEMA_VERSION = "https://json-schema.org/draft/2019-09/schema";
-	
+{	
 	public SchemaProperties(){};
 	
 	public static List<SchemaProperty> diagramProperties()
@@ -22,8 +23,8 @@ public final class SchemaProperties
 		return List.of(
 				new SchemaProperty("x",  SchemaType.INTEGER),
 				new SchemaProperty("y",  SchemaType.INTEGER),
-				new SchemaProperty("type", SchemaType.STRING),
-				new SchemaProperty("id",  SchemaType.INTEGER));
+				new SchemaProperty("id",  SchemaType.INTEGER),
+				new SchemaProperty("type", SchemaType.STRING));
 	}
 	
 	public static List<SchemaProperty> edgeBaseProperties()
@@ -34,13 +35,31 @@ public final class SchemaProperties
 				new SchemaProperty("type", SchemaType.STRING));
 	}
 	
-	public enum SchemaType
+	public static class SchemaTypeObject extends JSONObject
 	{
-		STRING("string"), INTEGER("integer"), NUMBER("number"), BOOLEAN("boolean"), ARRAY("array"), OBJECT("object");
+		public SchemaTypeObject(String pType)
+		{
+			put("type", pType);
+		}
+	}
+	
+	public enum SchemaType 
+	{
+		STRING(new SchemaTypeObject("string")),
+		INTEGER(new SchemaTypeObject("integer")),
+		NUMBER(new SchemaTypeObject("number")),
+		BOOLEAN(new SchemaTypeObject("boolean")),
+		ARRAY(new SchemaArray()),
+		OBJECT(new SchemaObject());
+	
+		private JSONObject aJsonObject;
 		
-		private final String aName;
+		private SchemaType(JSONObject pJsonObject)
+		{
+			aJsonObject = pJsonObject;
+		}
 		
-		SchemaType(String pName){ aName = pName;}
+		public JSONObject get() { return aJsonObject; }
 	}
 	
 	public static class SchemaProperty
@@ -54,14 +73,87 @@ public final class SchemaProperties
 			aType = pType;
 		}
 		
-		public String name()
+		public String name() { return aName; }
+		
+		public SchemaType type() { return aType; }
+	}
+	
+	public static class SchemaObject extends JSONObject
+	{
+		private final String type = "object";
+		public JSONObject properties = new JSONObject();
+		private JSONArray allOf = new JSONArray();
+		private JSONArray required = new JSONArray();
+		private boolean unevaluatedProperties = false;
+		
+		public SchemaObject()
 		{
-			return aName;
+			put("type", type);
+			put("required", required);
+			put("properties", properties);
+			put("allOf", allOf);
+			put("unevaluatedProperties", unevaluatedProperties);
 		}
 		
-		public SchemaType type()
+		public SchemaObject(String pSchema, String pId, String pTitle)
 		{
-			return aType;
+			put("$schema", pSchema);
+			put("$id", pId);
+			put("title", pTitle);
+			put("type", type);
+			put("required", required);
+			put("properties", properties);
+			put("unevaluatedProperties", unevaluatedProperties);
+		}
+		
+		public void addAllOf(JSONObject pObject)
+		{
+			allOf.put(pObject);
+		}
+		
+		public void addProperty(String pName, JSONObject pObject)
+		{
+			properties.put(pName,  pObject);
+		}
+		
+		public void addRequired(String... pRequired)
+		{
+			for(String r : pRequired) required.put(r);
+		}
+	}
+	
+	public static class SchemaEnum extends JSONObject
+	{
+		private JSONArray enumArray = new JSONArray();
+		
+		public SchemaEnum()
+		{
+			put("enum", enumArray);
+		}
+		
+		public SchemaEnum(Object... pEnums)
+		{
+			for(Object pEnum : pEnums) addEnum(pEnum);
+			put("enum", enumArray);
+		}
+		
+		public void addEnum(Object pEnum)
+		{
+			enumArray.put(pEnum);
+		}
+	}
+	
+	public static class SchemaArray extends JSONObject
+	{
+		public SchemaArray()
+		{
+			put("type", "array");
+			put("uniqueItems", true);
+		}
+		
+		public void setItems(JSONObject pObject)
+		{
+			put("items", pObject);
 		}
 	}
 }

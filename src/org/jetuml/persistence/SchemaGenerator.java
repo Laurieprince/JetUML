@@ -8,7 +8,6 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -21,12 +20,17 @@ import org.jetuml.diagram.Edge;
 import org.jetuml.diagram.Node;
 import org.jetuml.diagram.Properties;
 import org.jetuml.diagram.Property;
+import org.jetuml.persistence.SchemaProperties.SchemaArray;
+import org.jetuml.persistence.SchemaProperties.SchemaEnum;
+import org.jetuml.persistence.SchemaProperties.SchemaObject;
+import org.jetuml.persistence.SchemaProperties.SchemaProperty;
+import org.jetuml.persistence.SchemaProperties.SchemaType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public final class SchemaGenerator
 {
-	private static final String JSONSCHEMA_VERSION = "https://json-schema.org/draft/2019-09/schema";
+	public static final String JSONSCHEMA_VERSION = "https://json-schema.org/draft/2019-09/schema";
 	
 	private SchemaGenerator() {}
 	
@@ -37,93 +41,69 @@ public final class SchemaGenerator
 	 */
 	public static void main(String[] pArgs) throws IOException
 	{
-		generateDiagramSchemas();
+		generateJsonSchemas();
 	}
 	
-	private static void generateDiagramSchemas() throws IOException 
+	private static void generateJsonSchemas() throws IOException 
 	{
 		for( DiagramType diagramType : DiagramType.values() )
 		{
 			Path OUTPUT_FILE = Paths.get("docs/jsonschema", String.format("jsonschema_%s.json", diagramType.getName()));
-			File diagramFile = OUTPUT_FILE.toFile();
 			try( PrintWriter out = new PrintWriter(
-					new OutputStreamWriter(new FileOutputStream(diagramFile), StandardCharsets.UTF_8)))
+					new OutputStreamWriter(new FileOutputStream(OUTPUT_FILE.toFile()), StandardCharsets.UTF_8)))
 			{
 				out.println(encode(diagramType, OUTPUT_FILE.toString()).toString(3));
+				System.out.println(String.format("The diagram %s was generated successfully.", diagramType.getName()));
+			} 
+			catch(IOException e)
+			{
+				System.out.println(e);
 			}
-			System.out.println(String.format("The diagram %s was generated successfully.", diagramType.getName()));
 		}
 	}
 	
-	
 	public static JSONObject encode(DiagramType pDiagramType, String pFilePath)
 	{
-		JSONObject schemaObject = new JSONObject();
-		schemaObject.put("$schema", JSONSCHEMA_VERSION);
-		schemaObject.put("$id", pFilePath);
-		schemaObject.put("title", pDiagramType.getName());
-		schemaObject.put("description", pDiagramType.getName());
-		schemaObject.put("type", "object");
-		
-		schemaObject.put("required", new String[]{"diagram", "nodes", "edges", "version"});
+		SchemaObject schemaObject = new SchemaObject(JSONSCHEMA_VERSION, pFilePath, pDiagramType.getName());
+		schemaObject.addRequired(new String[]{"diagram", "nodes", "edges", "version"});
 		
 		JSONObject diagramObject = new JSONObject();
 		diagramObject.put("const", pDiagramType.getName());
-		
-		JSONObject schemaProperties = new JSONObject();
-		schemaProperties.put("diagram", diagramObject);
-		
-		schemaProperties.put("nodes", encodeDiagramElements(pDiagramType, Node.class));
-		schemaProperties.put("edges", encodeDiagramElements(pDiagramType, Edge.class));
-		schemaProperties.put("version", encodeField("string"));
-		schemaObject.put("properties", schemaProperties);
-		
+
+		schemaObject.addProperty("diagram", diagramObject);		
+		schemaObject.addProperty("nodes", encodeDiagramElements(pDiagramType, Node.class));
+		schemaObject.addProperty("edges", encodeDiagramElements(pDiagramType, Edge.class));
+		schemaObject.addProperty("version", SchemaType.STRING.get());
+
 		return schemaObject;
 	}
 	
 	private static JSONObject encodeDiagramElements(DiagramType pDiagramType, Class<? extends DiagramElement> elementClass)
 	{
-		JSONObject elementObject = new JSONObject();
+		SchemaObject schemaObject = new SchemaObject();
 		
-		elementObject.put("type", "array");
-		elementObject.put("description", "description");
-		
-		JSONObject propertiesObject = new JSONObject();
-		
-		if(elementClass.equals(Node.class)) encodeNodeBaseProperties(propertiesObject);
-		else encodeEdgeBaseProperties(propertiesObject);
+		if(elementClass.equals(Node.class)) encodeNodeBaseProperties(schemaObject);
+		else encodeEdgeBaseProperties(schemaObject);
 		
 		var diagramPrototypes = pDiagramType.getPrototypes().stream()
 				.filter(x -> elementClass.isAssignableFrom(x.getClass()))
 				.filter(distinctByKey(x -> x.getClass()))
 				.collect(Collectors.toSet());
 		
-		JSONArray enumArray = new JSONArray();
-		JSONArray allOfArray = new JSONArray();
+		SchemaEnum schemaEnum = new SchemaEnum();
 		for(DiagramElement diagramElement: diagramPrototypes)
 		{
-			enumArray.put(diagramElement.getClass().getSimpleName());
-			propertiesToJSONObject(propertiesObject, diagramElement.properties());
-			allOfArray.put(encodeIfThenStatement(diagramElement));
+			schemaEnum.addEnum(diagramElement.getClass().getSimpleName());
+			propertiesToJsonObject(schemaObject, diagramElement.properties());
+			schemaObject.addAllOf(encodeIfThenStatement(diagramElement));
 		}
 		
-		JSONObject typeObject = new JSONObject();
-		typeObject.put("enum", enumArray);
-		propertiesObject.put("type", typeObject);
+		schemaObject.addProperty("type", schemaEnum);
 		
-		JSONObject itemsObject = new JSONObject();
-		itemsObject.put("type", "object");
-		itemsObject.put("properties", propertiesObject);
-		itemsObject.put("allOf", allOfArray);
+		SchemaArray schemaArray = new SchemaArray();
+		schemaArray.setItems(schemaObject);
 		
-		if(elementClass.equals(Node.class)) itemsObject.put("required", Arrays.asList(NodeBaseProperties.values()).stream().map(x -> x.getLabel()).toList());
-		else itemsObject.put("required", Arrays.asList(EdgeBaseProperties.values()).stream().map(x -> x.getLabel()).toList());
-		
-		itemsObject.put("unevaluatedProperties", false);
-		
-		elementObject.put("items", itemsObject);
-		
-		return elementObject;
+		return schemaArray;
 	}
 	
 	private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor)
@@ -132,60 +112,50 @@ public final class SchemaGenerator
 		return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null; 
 	}
 	
-	private static void encodeNodeBaseProperties(JSONObject object)
+	private static void encodeNodeBaseProperties(SchemaObject object)
 	{
-		for(NodeBaseProperties nodeBaseProperty : NodeBaseProperties.values())
+		for(SchemaProperty nodeProperty : SchemaProperties.nodeBaseProperties())
 		{
-			object.put(nodeBaseProperty.getLabel(), encodeField(nodeBaseProperty.getType()));	
+			object.addProperty(nodeProperty.name(), nodeProperty.type().get());	
+			object.addRequired(nodeProperty.name());
 		}
 	
-		JSONObject childrenObject = new JSONObject();
-		childrenObject.put("type", "array");
-		childrenObject.put("uniqueItems", true);
-		childrenObject.put("items", encodeField("integer"));
-		object.put("children", childrenObject);
+		SchemaArray childrenArray = new SchemaArray();
+		childrenArray.setItems( SchemaType.INTEGER.get());
+		object.addProperty("children", childrenArray);
 	}
 	
-	private static void encodeEdgeBaseProperties(JSONObject object)
+	private static void encodeEdgeBaseProperties(SchemaObject object)
 	{
-		for(EdgeBaseProperties edgeBaseProperty : EdgeBaseProperties.values())
+		for(SchemaProperty edgeProperty : SchemaProperties.edgeBaseProperties())
 		{
-			object.put(edgeBaseProperty.getLabel(), encodeField(edgeBaseProperty.getType()));	
+			object.addProperty(edgeProperty.name(), edgeProperty.type().get());	
+			object.addRequired(edgeProperty.name());
 		}
 	}
 	
-	private static void propertiesToJSONObject(JSONObject object, Properties pProperties) 
+	private static void propertiesToJsonObject(SchemaObject object, Properties pProperties) 
 	{
 		for( Property property : pProperties )
 		{
 			Object value = property.get();
-			if( value instanceof String ) 
+			if( value instanceof String )
 			{
-				object.put(property.name().external(), encodeField("string"));
+				object.addProperty(property.name().external(), SchemaType.STRING.get());
 			}
 			else if (value instanceof Enum )
 			{
-				JSONObject enumObject = new JSONObject();
-				enumObject.put("enum", value.getClass().getEnumConstants());
-				object.put(property.name().external(), enumObject);
+				object.addProperty(property.name().external(), new SchemaEnum(value.getClass().getEnumConstants()));
 			}
 			else if( value instanceof Integer)
 			{
-				object.put(property.name().external(), encodeField("integer"));
+				object.addProperty(property.name().external(), SchemaType.INTEGER.get());
 			}
 			else if( value instanceof Boolean)
 			{
-				object.put(property.name().external(),encodeField("boolean"));
+				object.addProperty(property.name().external(), SchemaType.BOOLEAN.get());
 			}
 		}
-	}
-	
-	private static JSONObject encodeField( String pType)
-	{
-		JSONObject typeObject = new JSONObject();
-		typeObject.put("type",  pType);
-		
-		return typeObject;
 	}
 
 	private static JSONObject encodeIfThenStatement( DiagramElement pDiagramElement)
@@ -212,5 +182,5 @@ public final class SchemaGenerator
 		conditionObject.put("then", requiredObject);
 		
 		return conditionObject;
-	}
+	}	
 }
