@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jetuml.JetUML;
+import org.jetuml.application.Version;
 import org.jetuml.diagram.DiagramElement;
 import org.jetuml.diagram.DiagramType;
 import org.jetuml.diagram.Edge;
@@ -42,6 +44,15 @@ public class SchemaValidator
 			validateRootNodes();
 			validateChildrenNodes();
 			validateEdges();
+			
+			if(!aValidationContext.isValid())
+			{
+				Version version = Version.parse(aJsonObject.getString("version"));
+				if(!version.compatibleWith(JetUML.VERSION))
+				{
+					aValidationContext.addError(String.format(RESOURCES.getString("error.validator.version"),  version.toString(), JetUML.VERSION.toString()));
+				}
+			}
 		}
 		catch (JSONException | IllegalArgumentException exception)
 		{
