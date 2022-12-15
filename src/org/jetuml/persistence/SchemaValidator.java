@@ -137,7 +137,6 @@ public class SchemaValidator
 						JSONArray children = object.getJSONArray("children");
 						for (int j = 0; j < children.length(); j++)
 						{
-							// TODO: validate node can be a child
 							nodeIdExists(children.getInt(j), "children");
 						}
 					}

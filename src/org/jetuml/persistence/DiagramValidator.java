@@ -2,10 +2,9 @@ package org.jetuml.persistence;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class DiagramValidator
+public final class DiagramValidator
 {
 	/**
 	 * Run without arguments.
@@ -41,7 +40,7 @@ public class DiagramValidator
 		schemaValidator.validate();
 		if(!validationContext.isValid()) return validationContext;
 		
-		var diagram =  JsonDecoder.decode(validationContext.JSONObject());
+		var diagram = JsonDecoder.decode(validationContext.JSONObject());
 		validationContext.setDiagram(diagram);
 		
 		SemanticValidator semanticValidator = new SemanticValidator(validationContext);

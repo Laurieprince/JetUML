@@ -49,7 +49,6 @@ import org.jetuml.application.UserPreferences.BooleanPreference;
 import org.jetuml.diagram.Diagram;
 import org.jetuml.diagram.DiagramType;
 import org.jetuml.gui.tips.TipDialog;
-import org.jetuml.persistence.DeserializationException;
 import org.jetuml.persistence.PersistenceService;
 import org.jetuml.persistence.ValidationContext;
 
