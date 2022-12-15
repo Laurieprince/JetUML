@@ -41,7 +41,7 @@ public class SchemaValidator
 		{
 			if (!validateDiagramRequiredProperties()) return;
 			if (!validateDiagramType()) return;
-			validateRootNodes();
+			validateNodes();
 			validateChildrenNodes();
 			validateEdges();
 			
@@ -54,7 +54,7 @@ public class SchemaValidator
 				}
 			}
 		}
-		catch (JSONException | IllegalArgumentException exception)
+		catch (JSONException exception)
 		{
 			aValidationContext.addError(RESOURCES.getString("error.validator.instance_serialize_object"));
 		}
@@ -82,14 +82,14 @@ public class SchemaValidator
 			aDiagramType.getPrototypes().stream().forEach(x -> aElementsMap.put(x.getClass().getSimpleName(),x));
 			return true;
 		}
-		catch(IllegalArgumentException e)
+		catch(IllegalArgumentException exception)
 		{
 			aValidationContext.addError(String.format(RESOURCES.getString("error.validator.invalid_diagram_name"), diagramName));
 			return false;
 		}
 	}
 
-	private void validateRootNodes()
+	private void validateNodes()
 	{
 		aNodeIds = new HashSet<Integer>();
 
