@@ -193,7 +193,7 @@ public enum DiagramType
 	 */   
 	public List<DiagramElement> getToolPrototypes()
 	{
-		return Arrays.asList(aPrototypes).stream().filter(x -> x.isToolElement()).collect(Collectors.toList());
+		return Arrays.asList(aPrototypes).stream().filter(x -> x.isTool()).collect(Collectors.toList());
 	}
 	
 	/**

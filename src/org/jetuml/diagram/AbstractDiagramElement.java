@@ -57,7 +57,7 @@ public abstract class AbstractDiagramElement implements DiagramElement
 	}
 	
 	@Override
-	public boolean isToolElement()
+	public boolean isTool()
 	{
 		return true;
 	}

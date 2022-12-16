@@ -29,7 +29,7 @@ package org.jetuml.diagram.nodes;
 public final class PointNode extends AbstractNode
 {
 	@Override
-	public final boolean isToolElement()
+	public final boolean isTool()
 	{
 		return false;
 	}	

@@ -120,7 +120,7 @@ public class CallNode extends AbstractNode
 	}
 	
 	@Override
-	public final boolean isToolElement()
+	public final boolean isTool()
 	{
 		return false;
 	}

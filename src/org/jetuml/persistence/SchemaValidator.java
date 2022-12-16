@@ -48,7 +48,7 @@ public class SchemaValidator extends AbstractValidator<JSONObject>
 	private JSONObject aJsonObject;
 	private DiagramType aDiagramType;
 	private static Set<Integer> aNodeIds;
-	private Map<String, DiagramElement> aElementsMap = new HashMap<>();
+	private Map<String, DiagramElement> aElements = new HashMap<>();
 	
 	public SchemaValidator(JSONObject pJsonObject)
 	{
@@ -62,7 +62,7 @@ public class SchemaValidator extends AbstractValidator<JSONObject>
 		{
 			if (!validateDiagramRequiredProperties()) return;
 			if (!validateDiagramType()) return;
-			aDiagramType.getPrototypes().stream().forEach(x -> aElementsMap.put(x.getClass().getSimpleName(),x));
+			aDiagramType.getPrototypes().stream().forEach(x -> aElements.put(x.getClass().getSimpleName(),x));
 			validateNodes();
 			validateChildrenNodes();
 			validateEdges();
@@ -169,7 +169,7 @@ public class SchemaValidator extends AbstractValidator<JSONObject>
 		{
 			JSONObject object = nodes.getJSONObject(i);
 			var elementType = object.get("type");
-			DiagramElement diagramElement = aElementsMap.get(elementType);
+			DiagramElement diagramElement = aElements.get(elementType);
 			if (object.has("children"))
 			{
 				if(Node.class.isAssignableFrom(diagramElement.getClass()))
@@ -239,7 +239,7 @@ public class SchemaValidator extends AbstractValidator<JSONObject>
 	{
 		String elementType = pObject.getString("type");
 		
-		Optional<DiagramElement> diagramElement = Optional.ofNullable(aElementsMap.get(elementType));
+		Optional<DiagramElement> diagramElement = Optional.ofNullable(aElements.get(elementType));
 		
 		if (!diagramElement.isPresent())
 		{

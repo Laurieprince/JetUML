@@ -28,7 +28,7 @@ public interface DiagramElement extends Cloneable
 	/**
 	 * @return True is the object can be a tool.
 	 */
-	boolean isToolElement();
+	boolean isTool();
 	
 	/**
 	 * @return A set of properties that define this object.

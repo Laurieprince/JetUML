@@ -24,6 +24,8 @@ import java.util.List;
 
 public interface Validator
 {
+	public void validate();
+	
 	public boolean isValid();
 	
 	public List<String> errors();

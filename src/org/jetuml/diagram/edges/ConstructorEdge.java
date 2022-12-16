@@ -28,7 +28,7 @@ public final class ConstructorEdge extends CallEdge
 {
 	
 	@Override
-	public final boolean isToolElement()
+	public final boolean isTool()
 	{
 		return false;
 	}
