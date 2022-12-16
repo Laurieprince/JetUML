@@ -33,8 +33,8 @@ public class SemanticValidator extends AbstractValidator<Diagram>
 {
 	private Diagram aDiagram;
 	private Diagram aValidatedDiagram;
-	private DiagramRenderer aDiagramRenderer;
-	private DiagramBuilder aDiagramBuilder;
+	private DiagramRenderer aValidatedRenderer;
+	private DiagramBuilder aValidatedBuilder;
 
 	public SemanticValidator(Diagram pDiagram)
 	{
@@ -42,8 +42,8 @@ public class SemanticValidator extends AbstractValidator<Diagram>
 		
 		aDiagram = pDiagram;
 		aValidatedDiagram = new Diagram(aDiagram.getType());
-		aDiagramBuilder = DiagramType.newBuilderInstanceFor(aValidatedDiagram);
-		aDiagramRenderer = aDiagramBuilder.renderer();
+		aValidatedBuilder = DiagramType.newBuilderInstanceFor(aValidatedDiagram);
+		aValidatedRenderer = aValidatedBuilder.renderer();
 	}
 
 	public void validate()
@@ -59,7 +59,7 @@ public class SemanticValidator extends AbstractValidator<Diagram>
 		var result = true;
 		for (Node rootNode : aDiagram.rootNodes())
 		{
-			if (aDiagramBuilder.canAdd(rootNode, rootNode.position()))
+			if (aValidatedBuilder.canAdd(rootNode, rootNode.position()))
 			{
 				aValidatedDiagram.addRootNode(rootNode);
 			}
@@ -76,12 +76,12 @@ public class SemanticValidator extends AbstractValidator<Diagram>
 	{
 		try
 		{
-			aDiagramRenderer.getBounds();
+			aValidatedRenderer.getBounds();
 			for (Node rootNode : aDiagram.rootNodes())
 			{
 				for(Node childNode : rootNode.getChildren())
 				{
-					if (!aDiagramBuilder.canAdd(childNode, childNode.position()))
+					if (!aValidatedBuilder.canAdd(childNode, childNode.position()))
 					{
 						addError(String.format(RESOURCES.getString("error.validator.invalid_node_addition"), rootNode.toString(), rootNode.position().toString()));
 						return false;
@@ -102,7 +102,7 @@ public class SemanticValidator extends AbstractValidator<Diagram>
 		var result = true;
 		for (Edge edge : aDiagram.edges())
 		{
-			if (aDiagramBuilder.canAdd(edge, edge.getStart(), edge.getEnd()))
+			if (aValidatedBuilder.canAdd(edge, edge.getStart(), edge.getEnd()))
 			{
 				aValidatedDiagram.addEdge(edge);
 			} 

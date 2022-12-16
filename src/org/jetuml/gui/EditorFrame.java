@@ -296,7 +296,6 @@ public class EditorFrame extends BorderPane
 		
 		if(validator.isValid())
 		{
-			System.out.println("isValid");
 			DiagramTab frame = new DiagramTab((Diagram)validator.object());
 			frame.setFile(pFile.getAbsoluteFile());
 			addRecentFile(pFile.getPath());
@@ -304,7 +303,6 @@ public class EditorFrame extends BorderPane
 		}
 		else 
 		{
-			System.out.println("!isValid");
 			Alert alert = new Alert(AlertType.ERROR, validator.errors().toString(), ButtonType.OK);
 			alert.setTitle("JSON parsing error");
 			alert.initOwner(aMainStage);
